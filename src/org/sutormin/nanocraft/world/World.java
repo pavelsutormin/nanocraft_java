@@ -1,5 +1,6 @@
 package org.sutormin.nanocraft.world;
 
+import org.sutormin.nanocraft.NanoCraft;
 import org.sutormin.nanocraft.block.BlockTypes;
 
 import java.util.*;
@@ -37,6 +38,47 @@ public class World {
         Chunk chunk = chunks.get(pos);
         chunk.cleanup();
         chunks.remove(pos);
+    }
+
+    public void addChunk(ChunkPos pos, Chunk chunk) {
+        Chunk old = chunks.put(pos, chunk);
+        if (old != null) old.cleanup();
+        chunk.buildMesh();
+        remesh(pos.offset(-1, 0));
+        remesh(pos.offset(1, 0));
+        remesh(pos.offset(0, -1));
+        remesh(pos.offset(0, 1));
+    }
+
+    private void remesh(ChunkPos pos) {
+        Chunk c = chunks.get(pos);
+        if (c != null) c.buildMesh();
+    }
+
+    private boolean snapped = false;
+
+    public void drainNetworkChunks(int budget) {
+        ChunkLoader.Pending p;
+        while (budget-- > 0 && (p = ChunkLoader.poll()) != null) {
+            addChunk(p.pos(), new Chunk(p.pos()));
+            chunks.get(p.pos()).setBlocks(p.blocks());
+
+            if (!snapped) {
+                snapped = true;
+                NanoCraft.CAMERA.updatePosition(
+                        p.pos().x() * Chunk.SIZE_X + 8,
+                        100 + 3,
+                        p.pos().z() * Chunk.SIZE_Z + 8,
+                        0,
+                        0
+                );
+            }
+        }
+    }
+
+
+    public int chunkCount() {
+        return chunks.size();
     }
 
     public void loadChunksAndUnloadAllOtherChunks(Collection<ChunkPos> posList) {

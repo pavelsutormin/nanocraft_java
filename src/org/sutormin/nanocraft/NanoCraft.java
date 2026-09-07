@@ -9,6 +9,7 @@ import org.sutormin.nanocraft.networking.NetworkPhase;
 import org.sutormin.nanocraft.render.Shader;
 import org.sutormin.nanocraft.resources.Texture;
 import org.sutormin.nanocraft.resources.Textures;
+import org.sutormin.nanocraft.world.ChunkLoader;
 import org.sutormin.nanocraft.world.ChunkPos;
 import org.sutormin.nanocraft.world.World;
 
@@ -28,15 +29,15 @@ public class NanoCraft {
     private Texture texture;
     private Shader shader;
     public static World WORLD;
-    private final Camera CAMERA = new Camera();
-
-    public static NetworkPhase networkPhase = NetworkPhase.HANDSHAKE;
+    public static final Camera CAMERA = new Camera();
 
     private double lastMouseX = width / 2.0;
     private double lastMouseY = height / 2.0;
     private boolean firstMouse = true;
 
     private ChunkPos lastCameraChunkPos = null;
+
+    long lastLog;
 
     private static final String VERTEX_SHADER = """
         #version 330 core
@@ -150,7 +151,7 @@ public class NanoCraft {
 
         WORLD = new World();
 
-        //Networking.init();
+        Networking.init();
     }
 
     private void loop() {
@@ -163,11 +164,18 @@ public class NanoCraft {
             long now = System.nanoTime();
             float deltaTime = (now - lastTime) / 1000000000.0f;
             lastTime = now;
-
+            WORLD.drainNetworkChunks(100);
             ChunkPos currentChunkPos = CAMERA.getChunkPos();
             if (!currentChunkPos.equals(lastCameraChunkPos)) {
-                WORLD.loadChunksAndUnloadAllOtherChunks(getChunksInRenderDistance(currentChunkPos, 8));
+
+               // WORLD.loadChunksAndUnloadAllOtherChunks(getChunksInRenderDistance(currentChunkPos, 8));
                 lastCameraChunkPos = currentChunkPos;
+            }
+
+            if (now - lastLog > 1_000_000_000L) {
+                System.out.printf("camera chunk %s | loaded %d | queued %d%n",
+                        CAMERA.getChunkPos(), WORLD.chunkCount(), ChunkLoader.pendingCount());
+                lastLog = now;
             }
 
             processInput(deltaTime);

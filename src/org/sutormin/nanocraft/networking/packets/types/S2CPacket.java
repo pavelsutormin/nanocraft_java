@@ -1,4 +1,4 @@
-package org.sutormin.nanocraft.networking.packets;
+package org.sutormin.nanocraft.networking.packets.types;
 
 import io.netty.buffer.ByteBuf;
 

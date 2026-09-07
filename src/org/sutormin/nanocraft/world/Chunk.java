@@ -21,16 +21,18 @@ public class Chunk {
 
     private final ChunkPos worldPos;
     // 32 bits for: 16b = blockid, 16b = blockstate (redstone level, orientation, etc)
-    private final short[] blocks = new short[SIZE_X * SIZE_Y * SIZE_Z];
+    private short[] blocks = new short[SIZE_X * SIZE_Y * SIZE_Z];
     public Mesh mesh;
 
     public Chunk(ChunkPos worldPos) {
         this.worldPos = worldPos;
         this.mesh = new Mesh();
-        generateTerrain();
+        //generateTerrain();
     }
 
-    private void generateTerrain() {
+    public void setBlocks(short[] blocks){this.blocks=blocks;}
+
+    /*private void generateTerrain() {
         int worldOffsetX = worldPos.x() * SIZE_X;
         int worldOffsetZ = worldPos.z() * SIZE_Z;
 
@@ -64,7 +66,7 @@ public class Chunk {
                 blocks[getIndex(x, 0, z)] = BlockTypes.BEDROCK;
             }
         }
-    }
+    }*/
 
     private int hash(int x, int z) {
         int h = x * 374761393 ^ z * 668265263;

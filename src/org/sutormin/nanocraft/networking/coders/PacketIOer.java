@@ -3,8 +3,9 @@ package org.sutormin.nanocraft.networking.coders;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
-import org.sutormin.nanocraft.NanoCraft;
+import org.sutormin.nanocraft.networking.Networking;
 import org.sutormin.nanocraft.networking.packets.PacketList;
+import org.sutormin.nanocraft.networking.packets.types.S2CPacket;
 
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -33,16 +34,18 @@ public class PacketIOer {
 
     System.out.printf(
         "S2C: phase=%s id=0x%02X length=%d%n",
-        NanoCraft.networkPhase,
+        Networking.networkPhase,
         packetId,
         length
     );
 
-    PacketList.getS2CPacket(
+    S2CPacket packet = PacketList.getS2CPacket(
         packetId,
-        NanoCraft.networkPhase,
+        Networking.networkPhase,
         channel
-    ).read(buf);
+    );
+    if (packet == null) {System.out.printf("UNKNOWN S2C: phase=%s id=0x%02X length=%d%n", Networking.networkPhase, packetId,length); return;}
+    packet.read(buf);
   }
 
   public static void writeCompressedPacket(
@@ -190,7 +193,7 @@ public class PacketIOer {
     try {
       int packetId = VarCoder.readVarInt(packetData);
 
-      System.out.printf(
+      /*System.out.printf(
           "Compressed Packet Received -> Length: %d, " +
               "Uncompressed Length: %d, ID: 0x%02X%n",
           packetLength,
@@ -200,15 +203,18 @@ public class PacketIOer {
 
       System.out.printf(
           "S2C: phase=%s id=0x%02X%n",
-          NanoCraft.networkPhase,
+          Networking.networkPhase,
           packetId
-      );
+      );*/
 
-      PacketList.getS2CPacket(
-          packetId,
-          NanoCraft.networkPhase,
-          channel
-      ).read(packetData);
+      S2CPacket packet = PacketList.getS2CPacket(
+              packetId,
+              Networking.networkPhase,
+              channel
+      );
+      if (packet == null) {System.out.printf("UNKNOWN S2C: phase=%s id=0x%02X length=%d%n", Networking.networkPhase, packetId,dataLength); return;}
+
+      packet.read(packetData);
 
     } finally {
       // Only release wrapped decompressed buffers.
