@@ -1,7 +1,7 @@
 package org.sutormin.nanocraft.world;
 
 import org.sutormin.nanocraft.block.BlockTypes;
-import org.sutormin.nanocraft.networking.packets.play.s2c.ChunkData;
+import org.sutormin.nanocraft.networking.packets.play.world.chunk.S2CChunkData;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -14,6 +14,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * allocates a Mesh and buildMesh uploads buffers, both of which require the GL
  * context thread.
  *
+ * Chunk batches:
+ *   RECEIVING -> chunks decoded from the current server batch
+ *   READY     -> chunks whose batch has been completed and may be rendered
+ *
  * Vertical alignment: the vanilla overworld runs from y = -64 to y = 319, and
  * Chunk.SIZE_Y is 384, so section s covers array rows s * 16 to s * 16 + 15
  * with no gaps. Array y is world y plus 64.
@@ -21,46 +25,142 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class ChunkLoader {
 
     public static final int SECTION_SIZE = 16;
-    public static final int ENTRIES_PER_SECTION = 4096;
+    //public static final int ENTRIES_PER_SECTION = 4096;
 
-    private static final Queue<Pending> PENDING = new ConcurrentLinkedQueue<>();
+    private static final Queue<Pending> RECEIVING = new ConcurrentLinkedQueue<>();
+    private static final Queue<Pending> READY = new ConcurrentLinkedQueue<>();
+    private static final Queue<ChunkPos> UNLOADS = new ConcurrentLinkedQueue<>();
+    //private static final Queue<ChunkPos> REMESHES = new ConcurrentLinkedQueue<>();
+    private static final Queue<BlockChange> BLOCK_CHANGES = new ConcurrentLinkedQueue<>();
 
-    public record Pending(ChunkPos pos, short[] blocks) {
+    public record Pending(ChunkPos pos, char[] blocks) {
+    }
+
+    public record BlockChange(int x, int y, int z, char block) {
     }
 
     private ChunkLoader() {
     }
 
-    /** Call from ChunkData.read, on the Netty thread. */
-    public static void submit(ChunkData data) {
-        PENDING.add(new Pending(
-                new ChunkPos(data.chunkX, data.chunkZ),
-                toBlocks(data)
+    /**
+     * Call from ChunkData.read, on the Netty thread.
+     *
+     * Adds a decoded chunk to the current incoming batch.
+     */
+    public static void submit(S2CChunkData data) {
+        RECEIVING.add(new Pending(
+            new ChunkPos(data.chunkX, data.chunkZ),
+            toBlocks(data)
         ));
     }
 
-    /** Call from the main loop, on the GL thread. Returns null when empty. */
+    public static void submitUnload(ChunkPos pos) {
+        UNLOADS.add(pos);
+    }
+
+    //public static void submitRemesh(ChunkPos pos) {
+    //    REMESHES.add(pos);
+    //}
+
+    public static void submitBlockChange(int x, int y, int z, char block) {
+        BLOCK_CHANGES.add(new BlockChange(x, y, z, block));
+    }
+
+    /**
+     * Called when the server's chunk batch has finished.
+     *
+     * Verifies that the number of chunks received matches the server's
+     * reported batch size, then moves the entire batch to READY.
+     */
+    public static boolean chunkBatchFinished(int chunks) {
+        int received = RECEIVING.size();
+
+        if (received != chunks) {
+            System.err.printf(
+                "[WARN] Chunk batch size mismatch: expected %d chunks, received %d%n",
+                chunks,
+                received
+            );
+            return false;
+        }
+
+        for (int i = 0; i < chunks; i++) {
+            Pending pending = RECEIVING.poll();
+
+            if (pending == null) {
+                // Should be impossible because we checked the size above.
+                System.err.printf(
+                    "[WARN] Chunk batch unexpectedly emptied after %d/%d chunks%n",
+                    i,
+                    chunks
+                );
+                RECEIVING.clear();
+                return false;
+            }
+
+            READY.add(pending);
+        }
+        return true;
+    }
+
+    /**
+     * Call from the main loop, on the GL thread.
+     *
+     * Returns the next chunk whose batch has been completed.
+     * Returns null when empty.
+     */
     public static Pending poll() {
-        return PENDING.poll();
+        return READY.poll();
     }
 
-    public static int pendingCount() {
-        return PENDING.size();
+    public static ChunkPos pollUnload() {
+        return UNLOADS.poll();
     }
 
-    public static short[] toBlocks(ChunkData data) {
-        short[] blocks = new short[Chunk.SIZE_X * Chunk.SIZE_Y * Chunk.SIZE_Z];
+    //public static ChunkPos pollRemesh() {
+    //    return REMESHES.poll();
+    //}
+
+    public static BlockChange pollBlockChange() {
+        return BLOCK_CHANGES.poll();
+    }
+
+    /** Number of chunks waiting for the current batch to finish. */
+    public static int receivingCount() {
+        return RECEIVING.size();
+    }
+
+    /** Number of completed chunks waiting for the GL thread. */
+    public static int readyCount() {
+        return READY.size();
+    }
+
+    /** Number of chunks queued for unload. */
+    public static int unloadCount() {
+        return UNLOADS.size();
+    }
+
+    //public static int remeshCount() {
+    //    return REMESHES.size();
+    //}
+
+    public static int blockChangeCount() {
+        return BLOCK_CHANGES.size();
+    }
+
+    public static char[] toBlocks(S2CChunkData data) {
+        char[] blocks = new char[Chunk.SIZE_X * Chunk.SIZE_Y * Chunk.SIZE_Z];
 
         int sectionCount = Math.min(
-                data.sections.length,
-                Chunk.SIZE_Y / SECTION_SIZE
+            data.sections.length,
+            Chunk.SIZE_Y / SECTION_SIZE
         );
 
         for (int s = 0; s < sectionCount; s++) {
             writeSection(
-                    blocks,
-                    data.sections[s].blockStates,
-                    s * SECTION_SIZE
+                blocks,
+                data.sections[s].blockStates,
+                s * SECTION_SIZE
             );
         }
 
@@ -68,14 +168,14 @@ public final class ChunkLoader {
     }
 
     private static void writeSection(
-            short[] blocks,
-            ChunkData.PalettedContainer states,
-            int baseY
+        char[] blocks,
+        S2CChunkData.PalettedContainer states,
+        int baseY
     ) {
         // Single valued section, overwhelmingly the common case: whole
         // 16x16x16 is one block, usually air or stone.
         if (states.bitsPerEntry == 0) {
-            short type = BlockStateMapper.map(states.palette[0]);
+            char type = BlockStateMapper.map(states.palette[0]);
 
             if (type == BlockTypes.AIR) {
                 return;
@@ -93,10 +193,10 @@ public final class ChunkLoader {
         }
 
         // Indirect section: translate the palette once, then index into it.
-        short[] mapped = null;
+        char[] mapped = null;
 
         if (states.palette != null) {
-            mapped = new short[states.palette.length];
+            mapped = new char[states.palette.length];
 
             for (int i = 0; i < mapped.length; i++) {
                 mapped[i] = BlockStateMapper.map(states.palette[i]);
@@ -109,7 +209,7 @@ public final class ChunkLoader {
                     // Vanilla packs x fastest, then z, then y.
                     int raw = states.rawGet((y << 8) | (z << 4) | x);
 
-                    short type;
+                    char type;
 
                     if (mapped == null) {
                         // Global palette: raw is the state id itself.

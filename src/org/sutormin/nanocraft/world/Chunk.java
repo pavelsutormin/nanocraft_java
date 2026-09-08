@@ -6,10 +6,6 @@ import org.sutormin.nanocraft.block.BlockRegistry;
 import org.sutormin.nanocraft.block.BlockTypes;
 import org.sutormin.nanocraft.render.Mesh;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-
 public class Chunk {
     public static final int ATLAS_SIZE = 8;
     public static final float TILE_SIZE = 1.0f / ATLAS_SIZE;
@@ -21,7 +17,13 @@ public class Chunk {
 
     private final ChunkPos worldPos;
     // 32 bits for: 16b = blockid, 16b = blockstate (redstone level, orientation, etc)
-    private short[] blocks = new short[SIZE_X * SIZE_Y * SIZE_Z];
+    private char[] blocks = new char[SIZE_X * SIZE_Y * SIZE_Z];
+
+    private float[] vArray = new float[1024];
+    private int vCount = 0;
+    private int[] iArray = new int[1024];
+    private int iCount = 0;
+
     public Mesh mesh;
 
     public Chunk(ChunkPos worldPos) {
@@ -30,43 +32,8 @@ public class Chunk {
         //generateTerrain();
     }
 
-    public void setBlocks(short[] blocks){this.blocks=blocks;}
+    public void setBlocks(char[] blocks){this.blocks=blocks;}
 
-    /*private void generateTerrain() {
-        int worldOffsetX = worldPos.x() * SIZE_X;
-        int worldOffsetZ = worldPos.z() * SIZE_Z;
-
-        for (int x = 0; x < SIZE_X; x++) {
-            for (int z = 0; z < SIZE_Z; z++) {
-                int wx = worldOffsetX + x;
-                int wz = worldOffsetZ + z;
-
-                float baseNoise = sampleNoise2D(wx * 0.02f, wz * 0.02f);
-                float detailNoise = sampleNoise2D(wx * 0.08f, wz * 0.08f);
-
-                int height = (int) (72 + (baseNoise * 32.0f) + (detailNoise * 3.0f));
-                height = Math.max(1, Math.min(SIZE_Y - 1, height));
-
-                for (int y = 0; y < SIZE_Y; y++) {
-                    if (y < height - 4) {
-                        blocks[getIndex(x, y, z)] = BlockTypes.STONE; // stone
-                    } else if (y < height) {
-                        blocks[getIndex(x, y, z)] = BlockTypes.DIRT; // dirt
-                    } else if (y == height) {
-                        if (height <= SEA_LEVEL + 1) {
-                            blocks[getIndex(x, y, z)] = BlockTypes.SAND; // sand (unimp)
-                        } else {
-                            blocks[getIndex(x, y, z)] = BlockTypes.GRASS; // grass
-                        }
-                    } else if (y <= SEA_LEVEL) {
-                        blocks[getIndex(x, y, z)] = BlockTypes.WATER; // water (unimp)
-                    }
-                }
-
-                blocks[getIndex(x, 0, z)] = BlockTypes.BEDROCK;
-            }
-        }
-    }*/
 
     private int hash(int x, int z) {
         int h = x * 374761393 ^ z * 668265263;
@@ -116,8 +83,13 @@ public class Chunk {
     }
 
     public void buildMesh() {
-        List<Float> vertices = new ArrayList<>();
-        List<Integer> indices = new ArrayList<>();
+        vArray = new float[1024];
+        vCount = 0;
+        iArray = new int[1024];
+        iCount = 0;
+
+        //List<Float> vertices = new ArrayList<>();
+        //List<Integer> indices = new ArrayList<>();
 
         int worldOffsetX = worldPos.x() * SIZE_X;
         int worldOffsetZ = worldPos.z() * SIZE_Z;
@@ -132,32 +104,27 @@ public class Chunk {
                   int wz = worldOffsetZ + z;
 
                     if (isTransparent(x, y + 1, z))
-                        addFace(vertices, indices, wx, y, wz, 0, block.getTexture(0)); // top
+                        addFace(wx, y, wz, 0, block.getTexture(0)); // top
                     if (isTransparent(x, y - 1, z))
-                        addFace(vertices, indices, wx, y, wz, 1, block.getTexture(1)); // bottom
+                        addFace(wx, y, wz, 1, block.getTexture(1)); // bottom
                     if (isTransparent(x, y, z + 1))
-                        addFace(vertices, indices, wx, y, wz, 2, block.getTexture(2)); // front
+                        addFace(wx, y, wz, 2, block.getTexture(2)); // front
                     if (isTransparent(x, y, z - 1))
-                        addFace(vertices, indices, wx, y, wz, 3, block.getTexture(3)); // back
+                        addFace(wx, y, wz, 3, block.getTexture(3)); // back
                     if (isTransparent(x - 1, y, z))
-                        addFace(vertices, indices, wx, y, wz, 4, block.getTexture(4)); // left
+                        addFace(wx, y, wz, 4, block.getTexture(4)); // left
                     if (isTransparent(x + 1, y, z))
-                        addFace(vertices, indices, wx, y, wz, 5, block.getTexture(5)); // right
+                        addFace(wx, y, wz, 5, block.getTexture(5)); // right
                 }
             }
         }
 
-        float[] vArray = new float[vertices.size()];
-        for (int i = 0; i < vertices.size(); i++) vArray[i] = vertices.get(i);
 
-        int[] iArray = new int[indices.size()];
-        for (int i = 0; i < indices.size(); i++) iArray[i] = indices.get(i);
-
-        mesh.updateMesh(vArray, iArray);
+        mesh.updateMesh(vArray, vCount, iArray, iCount);
     }
 
-    private void addFace(List<Float> v, List<Integer> idx, int x, int y, int z, int face, int tex) {
-        int startIndex = v.size() / 7;
+    private void addFace(int x, int y, int z, int face, int tex) {
+        int startIndex = vCount / 7;
 
         float[][] pos = switch (face) {
             case 0 -> new float[][]{{0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}}; // top
@@ -181,15 +148,15 @@ public class Chunk {
         for (int i = 0; i < 4; i++) {
             int uvIndex = i % 4;
 
-            v.add(x + pos[i][0]);
-            v.add(y + pos[i][1]);
-            v.add(z + pos[i][2]);
+            pushVertex(x + pos[i][0]);
+            pushVertex(y + pos[i][1]);
+            pushVertex(z + pos[i][2]);
 
-            v.add(uvs[uvIndex][0]);
-            v.add(uvs[uvIndex][1]);
-            v.add((float) tex);
+            pushVertex(uvs[uvIndex][0]);
+            pushVertex(uvs[uvIndex][1]);
+            pushVertex((float) tex);
 
-            v.add(cornerAOs[i]);
+            pushVertex(cornerAOs[i]);
         }
 
         float aoBottomLeft = cornerAOs[0];
@@ -198,22 +165,34 @@ public class Chunk {
         float aoTopLeft = cornerAOs[3];
 
         if (aoBottomLeft + aoTopRight < aoBottomRight + aoTopLeft) {
-            idx.add(startIndex);
-            idx.add(startIndex + 1);
-            idx.add(startIndex + 3);
+            pushIndex(startIndex);
+            pushIndex(startIndex + 1);
+            pushIndex(startIndex + 3);
 
-            idx.add(startIndex + 1);
-            idx.add(startIndex + 2);
-            idx.add(startIndex + 3);
+            pushIndex(startIndex + 1);
+            pushIndex(startIndex + 2);
+            pushIndex(startIndex + 3);
         } else {
-            idx.add(startIndex);
-            idx.add(startIndex + 1);
-            idx.add(startIndex + 2);
+            pushIndex(startIndex);
+            pushIndex(startIndex + 1);
+            pushIndex(startIndex + 2);
 
-            idx.add(startIndex + 2);
-            idx.add(startIndex + 3);
-            idx.add(startIndex);
+            pushIndex(startIndex + 2);
+            pushIndex(startIndex + 3);
+            pushIndex(startIndex);
         }
+    }
+
+    private void pushVertex(float f) {
+        if (vCount == vArray.length)
+            vArray = java.util.Arrays.copyOf(vArray, vArray.length * 2);
+        vArray[vCount++] = f;
+    }
+
+    private void pushIndex(int f) {
+        if (iCount == iArray.length)
+            iArray = java.util.Arrays.copyOf(iArray, iArray.length * 2);
+        iArray[iCount++] = f;
     }
 
     private float getAOValue(boolean side1, boolean side2, boolean corner) {
@@ -313,32 +292,35 @@ public class Chunk {
         return (z * SIZE_X * SIZE_Y) + (y * SIZE_X) + x;
     }
 
-    public short getBlock(int x, int y, int z) {
+    public char getBlock(int x, int y, int z) {
         return blocks[getIndex(x, y, z)];
     }
 
-    public void setBlock(int x, int y, int z, short block) {
+    public void setBlock(int x, int y, int z, char block) {
         blocks[getIndex(x, y, z)] = block;
     }
 
     public boolean isTransparent(int x, int y, int z) {
         if (y < 0 || y >= SIZE_Y) return true;
-        if (x < 0 || x >= SIZE_X || z < 0 || z >= SIZE_X) return getBlockInterchunk(x, y, z) == BlockTypes.AIR;
+        if (x < 0 || x >= SIZE_X || z < 0 || z >= SIZE_X) {
+            char neighborBlock = getBlockInterchunk(x, y, z);
+            if (neighborBlock == BlockTypes.NULL) return true; // unloaded chunk -> treat as transparent
+            return neighborBlock == BlockTypes.AIR;
+        }
         return blocks[getIndex(x, y, z)] == BlockTypes.AIR;
     }
-
-    public short getBlockInterchunk(int x, int y, int z) {
+    public char getBlockInterchunk(int x, int y, int z) {
         Chunk chunk = NanoCraft.WORLD.getChunk(worldPos.offset(Math.floorDiv(x, SIZE_X), Math.floorDiv(z, SIZE_Z)));
         if (chunk == null) return BlockTypes.NULL;
         return chunk.getBlock(Math.floorMod(x, SIZE_X), y, Math.floorMod(z, SIZE_Z));
     }
 
-    public short getBlockChunkSafe(int x, int y, int z) {
+    public char getBlockChunkSafe(int x, int y, int z) {
         if (x < 0 || x >= SIZE_X || z < 0 || z >= SIZE_X) return BlockTypes.NULL;
         return blocks[getIndex(x, y, z)];
     }
 
-    public void setBlockChunkSafe(int x, int y, int z, short block) {
+    public void setBlockChunkSafe(int x, int y, int z, char block) {
         if (x < 0 || x >= SIZE_X || z < 0 || z >= SIZE_X) return;
         blocks[getIndex(x, y, z)] = block;
     }

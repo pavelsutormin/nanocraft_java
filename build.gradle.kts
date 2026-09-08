@@ -15,7 +15,7 @@ val lwjglNatives = "natives-linux"
 sourceSets {
     main {
         java.setSrcDirs(listOf("src"))
-        resources.setSrcDirs(listOf("src/assets"))
+        resources.setSrcDirs(listOf("src/resources"))
     }
 }
 

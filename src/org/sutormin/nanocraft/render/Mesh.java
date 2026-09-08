@@ -40,25 +40,25 @@ public class Mesh {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    public void updateMesh(float[] vertices, int[] indices){
+    public void updateMesh(float[] vertices, int vCount, int[] indices, int iCount){
         generated = true;
-        if (vertices.length == 0 || indices.length == 0) {
+        if (vCount == 0 || iCount == 0) {
             this.vertexCount = 0;
             return;
         }
-        vertexCount = indices.length;
-        long vBytes = (long) vertices.length * Float.BYTES;
-        long iBytes = (long) indices.length * Integer.BYTES;
+        vertexCount = iCount;
+        long vBytes = (long) vCount * Float.BYTES;
+        long iBytes = (long) iCount * Integer.BYTES;
 
-        FloatBuffer vBuffer = MemoryUtil.memAllocFloat(vertices.length);
-        vBuffer.put(vertices).flip();
+        FloatBuffer vBuffer = MemoryUtil.memAllocFloat(vCount);
+        vBuffer.put(vertices, 0, vCount).flip();
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
         glBufferData(GL_ARRAY_BUFFER, vBytes, GL_DYNAMIC_DRAW);
         glBufferData(GL_ARRAY_BUFFER, vBuffer, GL_DYNAMIC_DRAW);
         MemoryUtil.memFree(vBuffer);
 
-        IntBuffer iBuffer = MemoryUtil.memAllocInt(indices.length);
-        iBuffer.put(indices).flip();
+        IntBuffer iBuffer = MemoryUtil.memAllocInt(iCount);
+        iBuffer.put(indices, 0, iCount).flip();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, iBytes, GL_DYNAMIC_DRAW);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, iBuffer, GL_DYNAMIC_DRAW);

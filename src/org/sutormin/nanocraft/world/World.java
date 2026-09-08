@@ -8,29 +8,10 @@ import java.util.function.Function;
 
 public class World {
     private final Map<ChunkPos, Chunk> chunks = new HashMap<>();
-    private final List<ChunkPos> forceRemeshChunks = new ArrayList<>();
-    private final List<ChunkPos> cancelRemeshChunks = new ArrayList<>();
-    private final List<BlockData> setBlockPromises = new ArrayList<>();
+    private final Set<ChunkPos> dirty = new LinkedHashSet<>();
+    private final Map<ChunkPos, List<ChunkLoader.BlockChange>> pendingBlockChanges = new HashMap<>();
 
     public World() {
-    }
-
-    public void makeChunk(ChunkPos pos) {
-        if (chunks.containsKey(pos)) return;
-        Chunk chunk = new Chunk(pos);
-        chunks.put(pos, chunk);
-        forceRemeshChunks.add(pos.offset(-1,0));
-        forceRemeshChunks.add(pos.offset(1,0));
-        forceRemeshChunks.add(pos.offset(0,-1));
-        forceRemeshChunks.add(pos.offset(0,1));
-        cancelRemeshChunks.add(pos);
-    }
-
-    public void meshChunk(ChunkPos pos) {
-        if (!chunks.containsKey(pos)) return;
-        Chunk chunk = chunks.get(pos);
-        if (chunk.mesh.generated && (!forceRemeshChunks.contains(pos) || cancelRemeshChunks.contains(pos))) return;
-        chunk.buildMesh();
     }
 
     public void removeChunk(ChunkPos pos) {
@@ -43,11 +24,22 @@ public class World {
     public void addChunk(ChunkPos pos, Chunk chunk) {
         Chunk old = chunks.put(pos, chunk);
         if (old != null) old.cleanup();
-        chunk.buildMesh();
-        remesh(pos.offset(-1, 0));
-        remesh(pos.offset(1, 0));
-        remesh(pos.offset(0, -1));
-        remesh(pos.offset(0, 1));
+
+        // Replay queued updates for this chunk
+        List<ChunkLoader.BlockChange> pending = pendingBlockChanges.remove(pos);
+        if (pending != null) {
+            for (ChunkLoader.BlockChange change : pending) {
+                int localX = Math.floorMod(change.x(), Chunk.SIZE_X);
+                int localZ = Math.floorMod(change.z(), Chunk.SIZE_Z);
+                chunk.setBlock(localX, change.y(), localZ, change.block());
+            }
+        }
+
+        dirty.add(pos);
+        dirty.add(pos.offset(-1, 0));
+        dirty.add(pos.offset(1, 0));
+        dirty.add(pos.offset(0, -1));
+        dirty.add(pos.offset(0, 1));
     }
 
     private void remesh(ChunkPos pos) {
@@ -55,56 +47,56 @@ public class World {
         if (c != null) c.buildMesh();
     }
 
-    private boolean snapped = false;
-
     public void drainNetworkChunks(int budget) {
         ChunkLoader.Pending p;
         while (budget-- > 0 && (p = ChunkLoader.poll()) != null) {
-            addChunk(p.pos(), new Chunk(p.pos()));
-            chunks.get(p.pos()).setBlocks(p.blocks());
-
-            if (!snapped) {
-                snapped = true;
-                NanoCraft.CAMERA.updatePosition(
-                        p.pos().x() * Chunk.SIZE_X + 8,
-                        100 + 3,
-                        p.pos().z() * Chunk.SIZE_Z + 8,
-                        0,
-                        0
-                );
-            }
+            Chunk c = new Chunk(p.pos());
+            c.setBlocks(p.blocks());
+            addChunk(p.pos(), c);
         }
     }
 
+    public void flushDirty(int budget) {
+        Iterator<ChunkPos> it = dirty.iterator();
+        while (it.hasNext() && budget-- > 0) {
+            ChunkPos pos = it.next();
+            it.remove();
+            Chunk c = chunks.get(pos);
+            if (c != null) c.buildMesh();
+        }
+    }
+
+    public void drainUnloads(int budget) {
+        ChunkPos pos;
+        while (budget-- > 0 && (pos = ChunkLoader.pollUnload()) != null) {
+            removeChunk(pos);
+            dirty.add(pos.offset(-1, 0));
+            dirty.add(pos.offset(1, 0));
+            dirty.add(pos.offset(0, -1));
+            dirty.add(pos.offset(0, 1));
+        }
+    }
+
+    //public void drainRemeshes(int budget) {
+    //    ChunkPos change;
+    //    while (budget-- > 0 && (change = ChunkLoader.pollRemesh()) != null) {
+    //        dirty.add(change);
+    //        //setBlockAt(change.x(), change.y(), change.z(), change.block());
+    //    }
+    //}
+
+    public void drainBlockChanges(int budget) {
+        ChunkLoader.BlockChange change;
+        while (budget-- > 0 && (change = ChunkLoader.pollBlockChange()) != null) {
+            setBlockAt(change.x(), change.y(), change.z(), change.block());
+        }
+    }
 
     public int chunkCount() {
         return chunks.size();
     }
 
-    public void loadChunksAndUnloadAllOtherChunks(Collection<ChunkPos> posList) {
-        Set<ChunkPos> keepSet = new HashSet<>(posList);
-
-        chunks.entrySet().removeIf(entry -> {
-            if (!keepSet.contains(entry.getKey())) {
-                entry.getValue().cleanup();
-                return true;
-            }
-            return false;
-        });
-
-        forceRemeshChunks.clear();
-        cancelRemeshChunks.clear();
-
-        for (ChunkPos pos : posList) {
-            makeChunk(pos);
-        }
-
-        for (ChunkPos pos : posList) {
-            meshChunk(pos);
-        }
-    }
-
-    public short getBlockAt(int x, int y, int z) {
+    public char getBlockAt(int x, int y, int z) {
         ChunkPos chunkPos = getChunkPosFromBlock(x, z);
         Chunk chunk = chunks.get(chunkPos);
         if (chunk == null) return BlockTypes.AIR;
@@ -115,46 +107,29 @@ public class World {
         return chunk.getBlock(localX, y, localZ);
     }
 
-    public void setBlockAt(int x, int y, int z, short block) {
+    public void setBlockAt(int x, int y, int z, char block) {
         ChunkPos chunkPos = getChunkPosFromBlock(x, z);
         Chunk chunk = chunks.get(chunkPos);
-        if (chunk == null) return;
+
+        if (chunk == null) {
+            // Queue the block change until the chunk is added to the world
+            pendingBlockChanges.computeIfAbsent(chunkPos, k -> new ArrayList<>())
+                .add(new ChunkLoader.BlockChange(x, y, z, block));
+            return;
+        }
 
         int localX = Math.floorMod(x, Chunk.SIZE_X);
         int localZ = Math.floorMod(z, Chunk.SIZE_Z);
 
-
         chunk.setBlock(localX, y, localZ, block);
-        chunk.buildMesh();
+        dirty.add(chunkPos);
 
-        if (localX == 0) meshChunk(new ChunkPos(chunkPos.x() - 1, chunkPos.z()));
-        if (localX == Chunk.SIZE_X - 1) meshChunk(new ChunkPos(chunkPos.x() + 1, chunkPos.z()));
-        if (localZ == 0) meshChunk(new ChunkPos(chunkPos.x(), chunkPos.z() - 1));
-        if (localZ == Chunk.SIZE_Z - 1) meshChunk(new ChunkPos(chunkPos.x(), chunkPos.z() + 1));
+        if (localX == 0) dirty.add(chunkPos.offset(-1, 0));
+        if (localX == Chunk.SIZE_X - 1) dirty.add(chunkPos.offset(1, 0));
+        if (localZ == 0) dirty.add(chunkPos.offset(0, -1));
+        if (localZ == Chunk.SIZE_Z - 1) dirty.add(chunkPos.offset(0, 1));
     }
 
-    public void setBlockPromise(int x, int y, int z, Function<Short, Short> block){
-        setBlockPromises.add(new BlockData(x,y,z,block));
-    }
-
-    private void checkBlockPromises() {
-        Iterator<BlockData> iterator = setBlockPromises.iterator();
-        while (iterator.hasNext()) {
-            BlockData blockData = iterator.next();
-            int x = blockData.x();
-            int y = blockData.y();
-            int z = blockData.z();
-            ChunkPos chunkPos = getChunkPosFromBlock(x, z);
-            Chunk chunk = chunks.get(chunkPos);
-
-            if (chunk == null) continue;
-
-            short block = blockData.block().apply(getBlockAt(x, y, z));
-            if (block != BlockTypes.NULL) setBlockAt(x, y, z, block);
-
-            iterator.remove();
-        }
-    }
 
     public Chunk getChunk(ChunkPos pos){
         return chunks.get(pos);
@@ -172,11 +147,17 @@ public class World {
         }
     }
 
+    public void tick(){
+        drainNetworkChunks(100);
+        drainUnloads(50);
+        drainBlockChanges(200);
+        flushDirty(10);
+    }
+
     public void cleanup() {
         for (Chunk chunk : chunks.values()) {
             chunk.cleanup();
         }
         chunks.clear();
     }
-    private record BlockData(int x, int y, int z, Function<Short, Short> block){}
 }

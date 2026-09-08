@@ -1,5 +1,7 @@
 package org.sutormin.nanocraft.world;
 
+import org.sutormin.nanocraft.block.BlockRegistry;
+import org.sutormin.nanocraft.block.BlockType;
 import org.sutormin.nanocraft.block.BlockTypes;
 
 import java.io.BufferedReader;
@@ -34,7 +36,7 @@ import java.util.List;
  */
 public final class BlockStateMapper {
 
-    private static short[] table;
+    private static char[] table;
 
     private BlockStateMapper() {
     }
@@ -44,7 +46,7 @@ public final class BlockStateMapper {
      *           getResourceAsStream("/blockstates.txt")
      */
     public static void load(InputStream in) throws IOException {
-        List<Short> types = new ArrayList<>();
+        List<Character> types = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(in, StandardCharsets.UTF_8)
@@ -60,7 +62,7 @@ public final class BlockStateMapper {
             }
         }
 
-        short[] loaded = new short[types.size()];
+        char[] loaded = new char[types.size()];
 
         for (int i = 0; i < loaded.length; i++) {
             loaded[i] = types.get(i);
@@ -75,7 +77,7 @@ public final class BlockStateMapper {
         return table != null;
     }
 
-    public static short map(int stateId) {
+    public static char map(int stateId) {
         if (table == null) {
             // No table yet: show terrain as solid stone, keep air as air.
             return stateId == 0 ? BlockTypes.AIR : BlockTypes.STONE;
@@ -92,35 +94,15 @@ public final class BlockStateMapper {
      * Everything NanoCraft does not model yet collapses onto the closest
      * block it does have. Extend as BlockTypes grows.
      */
-    private static short fromName(String name) {
-        return switch (name) {
-            case "minecraft:air",
-                 "minecraft:cave_air",
-                 "minecraft:void_air" -> BlockTypes.AIR;
+    private static char fromName(String name) {
+      BlockType block = BlockRegistry.getBlockByName(name);
 
-            case "minecraft:grass_block" -> BlockTypes.GRASS;
+      if (block == null) {
+        //System.err.println("Unknown block: " + name);
+        return BlockTypes.NULL;
+      }
 
-            case "minecraft:dirt",
-                 "minecraft:coarse_dirt",
-                 "minecraft:rooted_dirt",
-                 "minecraft:podzol",
-                 "minecraft:mycelium",
-                 "minecraft:farmland",
-                 "minecraft:dirt_path" -> BlockTypes.DIRT;
-
-            case "minecraft:sand",
-                 "minecraft:red_sand",
-                 "minecraft:gravel",
-                 "minecraft:sandstone",
-                 "minecraft:red_sandstone" -> BlockTypes.SAND;
-
-            case "minecraft:water",
-                 "minecraft:bubble_column" -> BlockTypes.WATER;
-
-            case "minecraft:bedrock" -> BlockTypes.BEDROCK;
-
-            default -> isNonSolid(name) ? BlockTypes.AIR : BlockTypes.STONE;
-        };
+      return block.getId();
     }
 
     /**

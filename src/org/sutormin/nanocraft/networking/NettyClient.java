@@ -6,8 +6,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.sutormin.nanocraft.Options;
 import org.sutormin.nanocraft.networking.coders.PacketIO;
-import org.sutormin.nanocraft.networking.packets.login.c2s.Handshake;
-import org.sutormin.nanocraft.networking.packets.login.c2s.LoginStart;
+import org.sutormin.nanocraft.networking.packets.login.C2SHandshake;
+import org.sutormin.nanocraft.networking.packets.login.C2SLoginStart;
 
 public class NettyClient extends ChannelInboundHandlerAdapter {
 
@@ -15,17 +15,17 @@ public class NettyClient extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) {
         ByteBuf packet = Unpooled.buffer();
 
-        Handshake.make(
+        C2SHandshake.make(
                 packet,
-                "127.0.0.1",
-                25565
+                Options.SERVER_IP,
+                Options.PORT
         );
 
         ctx.write(packet);
 
         ByteBuf packet2 = Unpooled.buffer();
 
-        LoginStart.make(
+        C2SLoginStart.make(
                 packet2,
                 Options.PLAYER_USERNAME,
                 Options.PLAYER_UUID
