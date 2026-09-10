@@ -67,6 +67,10 @@ public class Shader {
         }
     }
 
+    public void setUniform(String uniformName, float x, float y) {
+        glUniform2f(uniforms.get(uniformName), x, y);
+    }
+
     public void setUniform(String uniformName, Vector3f value) {
         glUniform3f(uniforms.get(uniformName), value.x, value.y, value.z);
     }

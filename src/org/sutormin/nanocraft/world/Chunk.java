@@ -19,7 +19,7 @@ public class Chunk {
     // 32 bits for: 16b = blockid, 16b = blockstate (redstone level, orientation, etc)
     private char[] blocks = new char[SIZE_X * SIZE_Y * SIZE_Z];
 
-    private float[] vArray = new float[1024];
+    private long[] vArray = new long[1024];
     private int vCount = 0;
     private int[] iArray = new int[1024];
     private int iCount = 0;
@@ -29,6 +29,7 @@ public class Chunk {
     public Chunk(ChunkPos worldPos) {
         this.worldPos = worldPos;
         this.mesh = new Mesh();
+        mesh.setPos(this.worldPos.x(),this.worldPos.z());
         //generateTerrain();
     }
 
@@ -83,7 +84,7 @@ public class Chunk {
     }
 
     public void buildMesh() {
-        vArray = new float[1024];
+        vArray = new long[1024];
         vCount = 0;
         iArray = new int[1024];
         iCount = 0;
@@ -124,15 +125,15 @@ public class Chunk {
     }
 
     private void addFace(int x, int y, int z, int face, int tex) {
-        int startIndex = vCount / 7;
+        int startIndex = vCount;
 
-        float[][] pos = switch (face) {
-            case 0 -> new float[][]{{0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}}; // top
-            case 1 -> new float[][]{{0, 0, 0}, {1, 0, 0}, {1, 0, 1}, {0, 0, 1}}; // bottom
-            case 2 -> new float[][]{{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}; // front
-            case 3 -> new float[][]{{1, 0, 0}, {0, 0, 0}, {0, 1, 0}, {1, 1, 0}}; // back
-            case 4 -> new float[][]{{0, 0, 0}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}}; // left
-            case 5 -> new float[][]{{1, 0, 1}, {1, 0, 0}, {1, 1, 0}, {1, 1, 1}}; // right
+        short[][] pos = switch (face) {
+            case 0 -> new short[][]{{0, 128, 128}, {128, 128, 128}, {128, 128, 0}, {0, 128, 0}}; // top
+            case 1 -> new short[][]{{0, 0, 0}, {128, 0, 0}, {128, 0, 128}, {0, 0, 128}}; // bottom
+            case 2 -> new short[][]{{0, 0, 128}, {128, 0, 128}, {128, 128, 128}, {0, 128, 128}}; // front
+            case 3 -> new short[][]{{128, 0, 0}, {0, 0, 0}, {0, 128, 0}, {128, 128, 0}}; // back
+            case 4 -> new short[][]{{0, 0, 0}, {0, 0, 128}, {0, 128, 128}, {0, 128, 0}}; // left
+            case 5 -> new short[][]{{128, 0, 128}, {128, 0, 0}, {128, 128, 0}, {128, 128, 128}}; // right
             default -> throw new IllegalArgumentException();
         };
 
@@ -143,26 +144,40 @@ public class Chunk {
             {0, 1}
         };
 
-        float[] cornerAOs = calculateFaceAO(x & 15, y, z & 15, face);
+        byte[] cornerAOs = calculateFaceAO(x & 15, y, z & 15, face);
 
         for (int i = 0; i < 4; i++) {
-            int uvIndex = i % 4;
+            int uvIndex = i & 3;
 
-            pushVertex(x + pos[i][0]);
-            pushVertex(y + pos[i][1]);
-            pushVertex(z + pos[i][2]);
+            int gx = ((x & 15) << 7) + pos[i][0];
+            int gy = (y << 7) + pos[i][1];
+            int gz = ((z & 15) << 7) + pos[i][2];
 
-            pushVertex(uvs[uvIndex][0]);
-            pushVertex(uvs[uvIndex][1]);
-            pushVertex((float) tex);
+            long packed =
+                ((long) (gx           & 0xFFFL)  << 0)
+                    | ((long) (gy           & 0xFFFFL) << 12)
+                    | ((long) (gz           & 0xFFFL)  << 28)
+                    | ((long) (uvIndex      & 0x3L)    << 40)
+                    | ((long) (tex          & 0xFFFFL) << 42)
+                    | ((long) (cornerAOs[i] & 0x3L)    << 58);
 
-            pushVertex(cornerAOs[i]);
+            pushVertex(packed);
+
+            //pushVertex(x + pos[i][0]);
+            //pushVertex(y + pos[i][1]);
+            //pushVertex(z + pos[i][2]);
+
+            //pushVertex(uvs[uvIndex][0]);
+            //pushVertex(uvs[uvIndex][1]);
+            //pushVertex((float) tex);
+
+            //pushVertex(cornerAOs[i]);
         }
 
-        float aoBottomLeft = cornerAOs[0];
-        float aoBottomRight = cornerAOs[1];
-        float aoTopRight = cornerAOs[2];
-        float aoTopLeft = cornerAOs[3];
+        float aoBottomLeft = getAOValue(cornerAOs[0]);
+        float aoBottomRight = getAOValue(cornerAOs[1]);
+        float aoTopRight = getAOValue(cornerAOs[2]);
+        float aoTopLeft = getAOValue(cornerAOs[3]);
 
         if (aoBottomLeft + aoTopRight < aoBottomRight + aoTopLeft) {
             pushIndex(startIndex);
@@ -183,7 +198,7 @@ public class Chunk {
         }
     }
 
-    private void pushVertex(float f) {
+    private void pushVertex(long f) {
         if (vCount == vArray.length)
             vArray = java.util.Arrays.copyOf(vArray, vArray.length * 2);
         vArray[vCount++] = f;
@@ -195,23 +210,33 @@ public class Chunk {
         iArray[iCount++] = f;
     }
 
-    private float getAOValue(boolean side1, boolean side2, boolean corner) {
-        if (side1 && side2) return 0.4f; // 3 blocks: corner enclosed (darkest)
+    private float getAOValue(byte index) {
+
+        return switch (index) {
+            case 0b10 -> 0.8f;
+            case 0b01 -> 0.6f;
+            case 0b00 -> 0.4f;
+            default -> 0.9f; // 0 blocks: completely open air (bright)
+        };
+    }
+
+    private byte getAOIndex(boolean side1, boolean side2, boolean corner) {
+        if (side1 && side2) return 0b00; // 3 blocks: corner enclosed (darkest)
         int count = 0;
         if (side1) count++;
         if (side2) count++;
         if (corner) count++;
 
         return switch (count) {
-            case 1 -> 0.8f;
-            case 2 -> 0.6f;
-            case 3 -> 0.4f;
-            default -> 1.0f; // 0 blocks: completely open air (bright)
+            case 1 -> 0b10;
+            case 2 -> 0b01;
+            case 3 -> 0b00;
+            default -> 0b11; // 0 blocks: completely open air (bright)
         };
     }
 
-    private float[] calculateFaceAO(float x, float y, float z, int face) {
-        float[] aos = new float[4];
+    private byte[] calculateFaceAO(float x, float y, float z, int face) {
+        byte[] aos = new byte[4];
 
         int bx = (int) Math.floor(x);
         int by = (int) Math.floor(y);
@@ -224,10 +249,10 @@ public class Chunk {
                 boolean s3 = !isTransparent(bx, by + 1, bz - 1);
                 boolean s4 = !isTransparent(bx, by + 1, bz + 1);
 
-                aos[0] = getAOValue(s1, s4, !isTransparent(bx - 1, by + 1, bz + 1)); // BL
-                aos[1] = getAOValue(s2, s4, !isTransparent(bx + 1, by + 1, bz + 1)); // BR
-                aos[2] = getAOValue(s2, s3, !isTransparent(bx + 1, by + 1, bz - 1)); // TR
-                aos[3] = getAOValue(s1, s3, !isTransparent(bx - 1, by + 1, bz - 1)); // TL
+                aos[0] = getAOIndex(s1, s4, !isTransparent(bx - 1, by + 1, bz + 1)); // BL
+                aos[1] = getAOIndex(s2, s4, !isTransparent(bx + 1, by + 1, bz + 1)); // BR
+                aos[2] = getAOIndex(s2, s3, !isTransparent(bx + 1, by + 1, bz - 1)); // TR
+                aos[3] = getAOIndex(s1, s3, !isTransparent(bx - 1, by + 1, bz - 1)); // TL
             }
             case 1 -> { // BOTTOM Face (y - 1)
                 boolean s1 = !isTransparent(bx - 1, by - 1, bz);
@@ -235,10 +260,10 @@ public class Chunk {
                 boolean s3 = !isTransparent(bx, by - 1, bz - 1);
                 boolean s4 = !isTransparent(bx, by - 1, bz + 1);
 
-                aos[0] = getAOValue(s1, s3, !isTransparent(bx - 1, by - 1, bz - 1));
-                aos[1] = getAOValue(s2, s3, !isTransparent(bx + 1, by - 1, bz - 1));
-                aos[2] = getAOValue(s2, s4, !isTransparent(bx + 1, by - 1, bz + 1));
-                aos[3] = getAOValue(s1, s4, !isTransparent(bx - 1, by - 1, bz + 1));
+                aos[0] = getAOIndex(s1, s3, !isTransparent(bx - 1, by - 1, bz - 1));
+                aos[1] = getAOIndex(s2, s3, !isTransparent(bx + 1, by - 1, bz - 1));
+                aos[2] = getAOIndex(s2, s4, !isTransparent(bx + 1, by - 1, bz + 1));
+                aos[3] = getAOIndex(s1, s4, !isTransparent(bx - 1, by - 1, bz + 1));
             }
             case 2 -> { // FRONT Face (z + 1)
                 boolean s1 = !isTransparent(bx - 1, by, bz + 1);
@@ -246,10 +271,10 @@ public class Chunk {
                 boolean s3 = !isTransparent(bx, by - 1, bz + 1);
                 boolean s4 = !isTransparent(bx, by + 1, bz + 1);
 
-                aos[0] = getAOValue(s1, s3, !isTransparent(bx - 1, by - 1, bz + 1));
-                aos[1] = getAOValue(s2, s3, !isTransparent(bx + 1, by - 1, bz + 1));
-                aos[2] = getAOValue(s2, s4, !isTransparent(bx + 1, by + 1, bz + 1));
-                aos[3] = getAOValue(s1, s4, !isTransparent(bx - 1, by + 1, bz + 1));
+                aos[0] = getAOIndex(s1, s3, !isTransparent(bx - 1, by - 1, bz + 1));
+                aos[1] = getAOIndex(s2, s3, !isTransparent(bx + 1, by - 1, bz + 1));
+                aos[2] = getAOIndex(s2, s4, !isTransparent(bx + 1, by + 1, bz + 1));
+                aos[3] = getAOIndex(s1, s4, !isTransparent(bx - 1, by + 1, bz + 1));
             }
             case 3 -> { // BACK Face (z - 1)
                 boolean s1 = !isTransparent(bx - 1, by, bz - 1);
@@ -257,10 +282,10 @@ public class Chunk {
                 boolean s3 = !isTransparent(bx, by - 1, bz - 1);
                 boolean s4 = !isTransparent(bx, by + 1, bz - 1);
 
-                aos[0] = getAOValue(s2, s3, !isTransparent(bx + 1, by - 1, bz - 1));
-                aos[1] = getAOValue(s1, s3, !isTransparent(bx - 1, by - 1, bz - 1));
-                aos[2] = getAOValue(s1, s4, !isTransparent(bx - 1, by + 1, bz - 1));
-                aos[3] = getAOValue(s2, s4, !isTransparent(bx + 1, by + 1, bz - 1));
+                aos[0] = getAOIndex(s2, s3, !isTransparent(bx + 1, by - 1, bz - 1));
+                aos[1] = getAOIndex(s1, s3, !isTransparent(bx - 1, by - 1, bz - 1));
+                aos[2] = getAOIndex(s1, s4, !isTransparent(bx - 1, by + 1, bz - 1));
+                aos[3] = getAOIndex(s2, s4, !isTransparent(bx + 1, by + 1, bz - 1));
             }
             case 4 -> { // LEFT Face (x - 1)
                 boolean s1 = !isTransparent(bx - 1, by, bz - 1);
@@ -268,10 +293,10 @@ public class Chunk {
                 boolean s3 = !isTransparent(bx - 1, by - 1, bz);
                 boolean s4 = !isTransparent(bx - 1, by + 1, bz);
 
-                aos[0] = getAOValue(s1, s3, !isTransparent(bx - 1, by - 1, bz - 1));
-                aos[1] = getAOValue(s2, s3, !isTransparent(bx - 1, by - 1, bz + 1));
-                aos[2] = getAOValue(s2, s4, !isTransparent(bx - 1, by + 1, bz + 1));
-                aos[3] = getAOValue(s1, s4, !isTransparent(bx - 1, by + 1, bz - 1));
+                aos[0] = getAOIndex(s1, s3, !isTransparent(bx - 1, by - 1, bz - 1));
+                aos[1] = getAOIndex(s2, s3, !isTransparent(bx - 1, by - 1, bz + 1));
+                aos[2] = getAOIndex(s2, s4, !isTransparent(bx - 1, by + 1, bz + 1));
+                aos[3] = getAOIndex(s1, s4, !isTransparent(bx - 1, by + 1, bz - 1));
             }
             case 5 -> { // RIGHT Face (x + 1)
                 boolean s1 = !isTransparent(bx + 1, by, bz - 1);
@@ -279,10 +304,10 @@ public class Chunk {
                 boolean s3 = !isTransparent(bx + 1, by - 1, bz);
                 boolean s4 = !isTransparent(bx + 1, by + 1, bz);
 
-                aos[0] = getAOValue(s2, s3, !isTransparent(bx + 1, by - 1, bz + 1));
-                aos[1] = getAOValue(s1, s3, !isTransparent(bx + 1, by - 1, bz - 1));
-                aos[2] = getAOValue(s1, s4, !isTransparent(bx + 1, by + 1, bz - 1));
-                aos[3] = getAOValue(s2, s4, !isTransparent(bx + 1, by + 1, bz + 1));
+                aos[0] = getAOIndex(s2, s3, !isTransparent(bx + 1, by - 1, bz + 1));
+                aos[1] = getAOIndex(s1, s3, !isTransparent(bx + 1, by - 1, bz - 1));
+                aos[2] = getAOIndex(s1, s4, !isTransparent(bx + 1, by + 1, bz - 1));
+                aos[3] = getAOIndex(s2, s4, !isTransparent(bx + 1, by + 1, bz + 1));
             }
         }
         return aos;

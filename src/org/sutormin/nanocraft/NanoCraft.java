@@ -1,20 +1,21 @@
 package org.sutormin.nanocraft;
 
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryStack;
 import org.sutormin.nanocraft.block.BlockTypes;
 import org.sutormin.nanocraft.networking.Networking;
-import org.sutormin.nanocraft.networking.NetworkPhase;
 import org.sutormin.nanocraft.render.Shader;
 import org.sutormin.nanocraft.render.shaders.Frag;
 import org.sutormin.nanocraft.render.shaders.Vert;
-import org.sutormin.nanocraft.resources.Texture;
 import org.sutormin.nanocraft.resources.Textures;
-import org.sutormin.nanocraft.world.ChunkLoader;
 import org.sutormin.nanocraft.world.ChunkPos;
 import org.sutormin.nanocraft.world.World;
 
+import java.nio.IntBuffer;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -73,6 +74,19 @@ public class NanoCraft {
             CAMERA.processMouseInput(xOffset, yOffset);
         });
 
+        GLFW.glfwSetWindowSizeCallback(window, (windowHandle, width, height) -> {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                IntBuffer pWidth = stack.mallocInt(1);
+                IntBuffer pHeight = stack.mallocInt(1);
+
+                // Fetch the true pixel dimensions of the framebuffer
+                GLFW.glfwGetFramebufferSize(windowHandle, pWidth, pHeight);
+
+                // Update the viewport
+                GL11.glViewport(0, 0, pWidth.get(0), pHeight.get(0));
+            }
+        });
+
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
         glfwShowWindow(window);
@@ -83,12 +97,17 @@ public class NanoCraft {
         glCullFace(GL_BACK);
         glClearColor(0.623f, 0.734f, 0.785f, 1.0f);
 
-        int[] framebufferWidth = new int[1];
-        int[] framebufferHeight = new int[1];
-        
-        glfwGetFramebufferSize(window, framebufferWidth, framebufferHeight);
 
-        glViewport(0, 0, framebufferWidth[0], framebufferHeight[0]);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer pWidth = stack.mallocInt(1);
+            IntBuffer pHeight = stack.mallocInt(1);
+
+            // Fetch the true pixel dimensions of the framebuffer
+            GLFW.glfwGetFramebufferSize(window, pWidth, pHeight);
+
+            // Update the viewport
+            GL11.glViewport(0, 0, pWidth.get(0), pHeight.get(0));
+        }
 
         BlockTypes.define();
 
@@ -98,6 +117,7 @@ public class NanoCraft {
         SHADER = new Shader(Vert.VERTEX_SHADER, Frag.FRAGMENT_SHADER);
         SHADER.createUniform("uProjection");
         SHADER.createUniform("uView");
+        SHADER.createUniform("uChunkOffset");
 
         WORLD = new World();
 
