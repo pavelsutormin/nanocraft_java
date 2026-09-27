@@ -1,0 +1,13 @@
+def/block/default.def
+def/block/derived.def
+def/block/directional.def
+def/block/doors.def
+def/block/ground.def
+def/block/multiface.def
+def/block/pillars.def
+def/block/plants.def
+def/block/renames.def
+def/block/models.def
+def/block/chests.def
+def/block/rotated.def
+def/block/vanilla.def

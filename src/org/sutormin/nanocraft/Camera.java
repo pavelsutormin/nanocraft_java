@@ -1,13 +1,14 @@
 package org.sutormin.nanocraft;
 
+import org.sutormin.nanocraft.world.Dimension;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.sutormin.nanocraft.networking.Networking;
 import org.sutormin.nanocraft.networking.packets.play.player.C2SSetPlayerPosition;
-import org.sutormin.nanocraft.world.Chunk;
-import org.sutormin.nanocraft.world.ChunkPos;
+import org.sutormin.nanocraft.world.chunk.Chunk;
+import org.sutormin.nanocraft.world.chunk.ChunkPos;
 
 public class Camera {
 
@@ -118,7 +119,8 @@ public class Camera {
 
     public void setRotation(float yaw, float pitch) {
         this.yaw = yaw;
-        this.pitch = pitch;
+        // same limit as the mouse: at exactly +-90 the right vector has no length and would become NaN
+        this.pitch = Math.max(-89.0f, Math.min(89.0f, pitch));
 
         updateFront();
     }
@@ -167,15 +169,32 @@ public class Camera {
         return velocity.z;
     }
 
+    private boolean warnedInvalidPosition = false;
+
+    /** Moves the camera by its velocity; called every frame. Sending happens in {@link #sendPositionIfMoved}. */
     public void tick() {
         position.add(velocity);
         velocity.mul(0.98f);
-        if (!position.equals(lastPosition)) {
+        // the server disconnects players who send NaN/infinite coordinates ("Invalid move player packet")
+        if (!position.isFinite()) {
+            if (!warnedInvalidPosition) {
+                warnedInvalidPosition = true;
+                System.err.println("[Client] Camera position became invalid (" + position + ", velocity "
+                        + velocity + ", yaw " + yaw + ", pitch " + pitch + "); restoring the last good one");
+            }
+            position.set(lastPosition);
+            velocity.zero();
+        }
+    }
+
+    /** Sends the position if it changed since the last send; called once per client tick (see NanoCraft.clientTick). */
+    public void sendPositionIfMoved() {
+        if (position.isFinite() && !position.equals(lastPosition)) {
             ByteBuf buf = Unpooled.buffer();
             C2SSetPlayerPosition.make(
                 buf,
                 position.x,
-                position.y-64,
+                position.y + Dimension.minY(), // render y back to world y
                 position.z,
                 (byte) 0
             );

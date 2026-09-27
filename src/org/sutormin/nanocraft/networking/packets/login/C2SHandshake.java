@@ -8,7 +8,7 @@ import org.sutormin.nanocraft.networking.packets.types.C2SPacket;
 
 public class C2SHandshake implements C2SPacket {
     public static short ID = 0;
-    public static short PROTOCOL = 776;
+    public static short PROTOCOL = 777; // Minecraft 26.3
     public static void make(ByteBuf buf, String addr, int port) {
         ByteBuf packet = Unpooled.buffer();
         VarCoder.writeVarInt(packet, PROTOCOL);

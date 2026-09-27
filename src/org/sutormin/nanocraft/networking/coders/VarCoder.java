@@ -23,18 +23,21 @@ public final class VarCoder {
         return x;
     }
 
+    /**
+     * Throws IndexOutOfBoundsException if the buffer ends in the middle of the VarInt (readByte does),
+     * which the frame decoder relies on to wait for the rest of a split packet length.
+     */
     public static int readVarInt(ByteBuf buf) {
         int value = 0;
         int position = 0;
         byte currentByte;
-        while (buf.isReadable()) {
+        while (true) {
             currentByte = buf.readByte();
             value |= (currentByte & 0x7F) << position;
-            if ((currentByte & 0x80) == 0) break;
+            if ((currentByte & 0x80) == 0) return value;
             position += 7;
             if (position >= 32) throw new RuntimeException("VarInt is too big");
         }
-        return value;
     }
 
     public static void writeVarLong(ByteBuf buf, long value) {

@@ -1,0 +1,192 @@
+// logs, stems, wood and other axis-rotated blocks
+// <name> <shape> <textures...>  full-block face order: up down north south east west
+// name[prop=a|b] matches every state with those property values; the most specific match wins
+pale_oak_wood[axis=x] full pale_oak_log uv=r270,r270,r90,r270,r180,r0
+pale_oak_wood[axis=y] full pale_oak_log
+pale_oak_wood[axis=z] full pale_oak_log uv=r0,r180,r180,r0,r270,r90
+oak_log[axis=x] full oak_log oak_log oak_log oak_log oak_log_top oak_log_top uv=r270,r270,r90,r270,r0,r0
+oak_log[axis=y] full oak_log_top oak_log_top oak_log oak_log oak_log oak_log
+oak_log[axis=z] full oak_log oak_log oak_log_top oak_log_top oak_log oak_log uv=r0,r180,r0,r0,r270,r90
+spruce_log[axis=x] full spruce_log spruce_log spruce_log spruce_log spruce_log_top spruce_log_top uv=r270,r270,r90,r270,r0,r0
+spruce_log[axis=y] full spruce_log_top spruce_log_top spruce_log spruce_log spruce_log spruce_log
+spruce_log[axis=z] full spruce_log spruce_log spruce_log_top spruce_log_top spruce_log spruce_log uv=r0,r180,r0,r0,r270,r90
+birch_log[axis=x] full birch_log birch_log birch_log birch_log birch_log_top birch_log_top uv=r270,r270,r90,r270,r0,r0
+birch_log[axis=y] full birch_log_top birch_log_top birch_log birch_log birch_log birch_log
+birch_log[axis=z] full birch_log birch_log birch_log_top birch_log_top birch_log birch_log uv=r0,r180,r0,r0,r270,r90
+jungle_log[axis=x] full jungle_log jungle_log jungle_log jungle_log jungle_log_top jungle_log_top uv=r270,r270,r90,r270,r0,r0
+jungle_log[axis=y] full jungle_log_top jungle_log_top jungle_log jungle_log jungle_log jungle_log
+jungle_log[axis=z] full jungle_log jungle_log jungle_log_top jungle_log_top jungle_log jungle_log uv=r0,r180,r0,r0,r270,r90
+acacia_log[axis=x] full acacia_log acacia_log acacia_log acacia_log acacia_log_top acacia_log_top uv=r270,r270,r90,r270,r0,r0
+acacia_log[axis=y] full acacia_log_top acacia_log_top acacia_log acacia_log acacia_log acacia_log
+acacia_log[axis=z] full acacia_log acacia_log acacia_log_top acacia_log_top acacia_log acacia_log uv=r0,r180,r0,r0,r270,r90
+cherry_log[axis=x] full cherry_log cherry_log cherry_log cherry_log cherry_log_top cherry_log_top uv=r270,r270,r270,r270,r0,r0
+cherry_log[axis=y] full cherry_log_top cherry_log_top cherry_log cherry_log cherry_log cherry_log
+cherry_log[axis=z] full cherry_log cherry_log cherry_log_top cherry_log_top cherry_log cherry_log uv=r0,r0,r0,r0,r270,r270
+dark_oak_log[axis=x] full dark_oak_log dark_oak_log dark_oak_log dark_oak_log dark_oak_log_top dark_oak_log_top uv=r270,r270,r90,r270,r0,r0
+dark_oak_log[axis=y] full dark_oak_log_top dark_oak_log_top dark_oak_log dark_oak_log dark_oak_log dark_oak_log
+dark_oak_log[axis=z] full dark_oak_log dark_oak_log dark_oak_log_top dark_oak_log_top dark_oak_log dark_oak_log uv=r0,r180,r0,r0,r270,r90
+pale_oak_log[axis=x] full pale_oak_log pale_oak_log pale_oak_log pale_oak_log pale_oak_log_top pale_oak_log_top uv=r270,r270,r90,r270,r0,r0
+pale_oak_log[axis=y] full pale_oak_log_top pale_oak_log_top pale_oak_log pale_oak_log pale_oak_log pale_oak_log
+pale_oak_log[axis=z] full pale_oak_log pale_oak_log pale_oak_log_top pale_oak_log_top pale_oak_log pale_oak_log uv=r0,r180,r0,r0,r270,r90
+mangrove_log[axis=x] full mangrove_log mangrove_log mangrove_log mangrove_log mangrove_log_top mangrove_log_top uv=r270,r270,r90,r270,r0,r0
+mangrove_log[axis=y] full mangrove_log_top mangrove_log_top mangrove_log mangrove_log mangrove_log mangrove_log
+mangrove_log[axis=z] full mangrove_log mangrove_log mangrove_log_top mangrove_log_top mangrove_log mangrove_log uv=r0,r180,r0,r0,r270,r90
+muddy_mangrove_roots[axis=x] full muddy_mangrove_roots_side muddy_mangrove_roots_side muddy_mangrove_roots_side muddy_mangrove_roots_side muddy_mangrove_roots_top muddy_mangrove_roots_top uv=r270,r270,r90,r270,r180,r0
+muddy_mangrove_roots[axis=y] full muddy_mangrove_roots_top muddy_mangrove_roots_top muddy_mangrove_roots_side muddy_mangrove_roots_side muddy_mangrove_roots_side muddy_mangrove_roots_side
+muddy_mangrove_roots[axis=z] full muddy_mangrove_roots_side muddy_mangrove_roots_side muddy_mangrove_roots_top muddy_mangrove_roots_top muddy_mangrove_roots_side muddy_mangrove_roots_side uv=r0,r180,r180,r0,r270,r90
+bamboo_block[axis=x] full bamboo_block bamboo_block bamboo_block bamboo_block bamboo_block_top bamboo_block_top uv=r270,r270,r270,r270,r0,r0
+bamboo_block[axis=y] full bamboo_block_top bamboo_block_top bamboo_block bamboo_block bamboo_block bamboo_block
+bamboo_block[axis=z] full bamboo_block bamboo_block bamboo_block_top bamboo_block_top bamboo_block bamboo_block uv=r0,r0,r0,r0,r270,r270
+stripped_spruce_log[axis=x] full stripped_spruce_log stripped_spruce_log stripped_spruce_log stripped_spruce_log stripped_spruce_log_top stripped_spruce_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_spruce_log[axis=y] full stripped_spruce_log_top stripped_spruce_log_top stripped_spruce_log stripped_spruce_log stripped_spruce_log stripped_spruce_log
+stripped_spruce_log[axis=z] full stripped_spruce_log stripped_spruce_log stripped_spruce_log_top stripped_spruce_log_top stripped_spruce_log stripped_spruce_log uv=r0,r180,r0,r0,r270,r90
+stripped_birch_log[axis=x] full stripped_birch_log stripped_birch_log stripped_birch_log stripped_birch_log stripped_birch_log_top stripped_birch_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_birch_log[axis=y] full stripped_birch_log_top stripped_birch_log_top stripped_birch_log stripped_birch_log stripped_birch_log stripped_birch_log
+stripped_birch_log[axis=z] full stripped_birch_log stripped_birch_log stripped_birch_log_top stripped_birch_log_top stripped_birch_log stripped_birch_log uv=r0,r180,r0,r0,r270,r90
+stripped_jungle_log[axis=x] full stripped_jungle_log stripped_jungle_log stripped_jungle_log stripped_jungle_log stripped_jungle_log_top stripped_jungle_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_jungle_log[axis=y] full stripped_jungle_log_top stripped_jungle_log_top stripped_jungle_log stripped_jungle_log stripped_jungle_log stripped_jungle_log
+stripped_jungle_log[axis=z] full stripped_jungle_log stripped_jungle_log stripped_jungle_log_top stripped_jungle_log_top stripped_jungle_log stripped_jungle_log uv=r0,r180,r0,r0,r270,r90
+stripped_acacia_log[axis=x] full stripped_acacia_log stripped_acacia_log stripped_acacia_log stripped_acacia_log stripped_acacia_log_top stripped_acacia_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_acacia_log[axis=y] full stripped_acacia_log_top stripped_acacia_log_top stripped_acacia_log stripped_acacia_log stripped_acacia_log stripped_acacia_log
+stripped_acacia_log[axis=z] full stripped_acacia_log stripped_acacia_log stripped_acacia_log_top stripped_acacia_log_top stripped_acacia_log stripped_acacia_log uv=r0,r180,r0,r0,r270,r90
+stripped_cherry_log[axis=x] full stripped_cherry_log stripped_cherry_log stripped_cherry_log stripped_cherry_log stripped_cherry_log_top stripped_cherry_log_top uv=r270,r270,r270,r270,r0,r0
+stripped_cherry_log[axis=y] full stripped_cherry_log_top stripped_cherry_log_top stripped_cherry_log stripped_cherry_log stripped_cherry_log stripped_cherry_log
+stripped_cherry_log[axis=z] full stripped_cherry_log stripped_cherry_log stripped_cherry_log_top stripped_cherry_log_top stripped_cherry_log stripped_cherry_log uv=r0,r0,r0,r0,r270,r270
+stripped_dark_oak_log[axis=x] full stripped_dark_oak_log stripped_dark_oak_log stripped_dark_oak_log stripped_dark_oak_log stripped_dark_oak_log_top stripped_dark_oak_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_dark_oak_log[axis=y] full stripped_dark_oak_log_top stripped_dark_oak_log_top stripped_dark_oak_log stripped_dark_oak_log stripped_dark_oak_log stripped_dark_oak_log
+stripped_dark_oak_log[axis=z] full stripped_dark_oak_log stripped_dark_oak_log stripped_dark_oak_log_top stripped_dark_oak_log_top stripped_dark_oak_log stripped_dark_oak_log uv=r0,r180,r0,r0,r270,r90
+stripped_pale_oak_log[axis=x] full stripped_pale_oak_log stripped_pale_oak_log stripped_pale_oak_log stripped_pale_oak_log stripped_pale_oak_log_top stripped_pale_oak_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_pale_oak_log[axis=y] full stripped_pale_oak_log_top stripped_pale_oak_log_top stripped_pale_oak_log stripped_pale_oak_log stripped_pale_oak_log stripped_pale_oak_log
+stripped_pale_oak_log[axis=z] full stripped_pale_oak_log stripped_pale_oak_log stripped_pale_oak_log_top stripped_pale_oak_log_top stripped_pale_oak_log stripped_pale_oak_log uv=r0,r180,r0,r0,r270,r90
+stripped_oak_log[axis=x] full stripped_oak_log stripped_oak_log stripped_oak_log stripped_oak_log stripped_oak_log_top stripped_oak_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_oak_log[axis=y] full stripped_oak_log_top stripped_oak_log_top stripped_oak_log stripped_oak_log stripped_oak_log stripped_oak_log
+stripped_oak_log[axis=z] full stripped_oak_log stripped_oak_log stripped_oak_log_top stripped_oak_log_top stripped_oak_log stripped_oak_log uv=r0,r180,r0,r0,r270,r90
+stripped_mangrove_log[axis=x] full stripped_mangrove_log stripped_mangrove_log stripped_mangrove_log stripped_mangrove_log stripped_mangrove_log_top stripped_mangrove_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_mangrove_log[axis=y] full stripped_mangrove_log_top stripped_mangrove_log_top stripped_mangrove_log stripped_mangrove_log stripped_mangrove_log stripped_mangrove_log
+stripped_mangrove_log[axis=z] full stripped_mangrove_log stripped_mangrove_log stripped_mangrove_log_top stripped_mangrove_log_top stripped_mangrove_log stripped_mangrove_log uv=r0,r180,r0,r0,r270,r90
+stripped_bamboo_block[axis=x] full stripped_bamboo_block stripped_bamboo_block stripped_bamboo_block stripped_bamboo_block stripped_bamboo_block_top stripped_bamboo_block_top uv=r270,r270,r270,r270,r0,r0
+stripped_bamboo_block[axis=y] full stripped_bamboo_block_top stripped_bamboo_block_top stripped_bamboo_block stripped_bamboo_block stripped_bamboo_block stripped_bamboo_block
+stripped_bamboo_block[axis=z] full stripped_bamboo_block stripped_bamboo_block stripped_bamboo_block_top stripped_bamboo_block_top stripped_bamboo_block stripped_bamboo_block uv=r0,r0,r0,r0,r270,r270
+oak_wood[axis=x] full oak_log uv=r270,r270,r90,r270,r180,r0
+oak_wood[axis=y] full oak_log
+oak_wood[axis=z] full oak_log uv=r0,r180,r180,r0,r270,r90
+spruce_wood[axis=x] full spruce_log uv=r270,r270,r90,r270,r180,r0
+spruce_wood[axis=y] full spruce_log
+spruce_wood[axis=z] full spruce_log uv=r0,r180,r180,r0,r270,r90
+birch_wood[axis=x] full birch_log uv=r270,r270,r90,r270,r180,r0
+birch_wood[axis=y] full birch_log
+birch_wood[axis=z] full birch_log uv=r0,r180,r180,r0,r270,r90
+jungle_wood[axis=x] full jungle_log uv=r270,r270,r90,r270,r180,r0
+jungle_wood[axis=y] full jungle_log
+jungle_wood[axis=z] full jungle_log uv=r0,r180,r180,r0,r270,r90
+acacia_wood[axis=x] full acacia_log uv=r270,r270,r90,r270,r180,r0
+acacia_wood[axis=y] full acacia_log
+acacia_wood[axis=z] full acacia_log uv=r0,r180,r180,r0,r270,r90
+cherry_wood[axis=x] full cherry_log uv=r270,r270,r90,r270,r180,r0
+cherry_wood[axis=y] full cherry_log
+cherry_wood[axis=z] full cherry_log uv=r0,r180,r180,r0,r270,r90
+dark_oak_wood[axis=x] full dark_oak_log uv=r270,r270,r90,r270,r180,r0
+dark_oak_wood[axis=y] full dark_oak_log
+dark_oak_wood[axis=z] full dark_oak_log uv=r0,r180,r180,r0,r270,r90
+mangrove_wood[axis=x] full mangrove_log uv=r270,r270,r90,r270,r180,r0
+mangrove_wood[axis=y] full mangrove_log
+mangrove_wood[axis=z] full mangrove_log uv=r0,r180,r180,r0,r270,r90
+stripped_oak_wood[axis=x] full stripped_oak_log uv=r270,r270,r90,r270,r180,r0
+stripped_oak_wood[axis=y] full stripped_oak_log
+stripped_oak_wood[axis=z] full stripped_oak_log uv=r0,r180,r180,r0,r270,r90
+stripped_spruce_wood[axis=x] full stripped_spruce_log uv=r270,r270,r90,r270,r180,r0
+stripped_spruce_wood[axis=y] full stripped_spruce_log
+stripped_spruce_wood[axis=z] full stripped_spruce_log uv=r0,r180,r180,r0,r270,r90
+stripped_birch_wood[axis=x] full stripped_birch_log uv=r270,r270,r90,r270,r180,r0
+stripped_birch_wood[axis=y] full stripped_birch_log
+stripped_birch_wood[axis=z] full stripped_birch_log uv=r0,r180,r180,r0,r270,r90
+stripped_jungle_wood[axis=x] full stripped_jungle_log uv=r270,r270,r90,r270,r180,r0
+stripped_jungle_wood[axis=y] full stripped_jungle_log
+stripped_jungle_wood[axis=z] full stripped_jungle_log uv=r0,r180,r180,r0,r270,r90
+stripped_acacia_wood[axis=x] full stripped_acacia_log uv=r270,r270,r90,r270,r180,r0
+stripped_acacia_wood[axis=y] full stripped_acacia_log
+stripped_acacia_wood[axis=z] full stripped_acacia_log uv=r0,r180,r180,r0,r270,r90
+stripped_cherry_wood[axis=x] full stripped_cherry_log uv=r270,r270,r90,r270,r180,r0
+stripped_cherry_wood[axis=y] full stripped_cherry_log
+stripped_cherry_wood[axis=z] full stripped_cherry_log uv=r0,r180,r180,r0,r270,r90
+stripped_dark_oak_wood[axis=x] full stripped_dark_oak_log uv=r270,r270,r90,r270,r180,r0
+stripped_dark_oak_wood[axis=y] full stripped_dark_oak_log
+stripped_dark_oak_wood[axis=z] full stripped_dark_oak_log uv=r0,r180,r180,r0,r270,r90
+stripped_pale_oak_wood[axis=x] full stripped_pale_oak_log uv=r270,r270,r90,r270,r180,r0
+stripped_pale_oak_wood[axis=y] full stripped_pale_oak_log
+stripped_pale_oak_wood[axis=z] full stripped_pale_oak_log uv=r0,r180,r180,r0,r270,r90
+stripped_mangrove_wood[axis=x] full stripped_mangrove_log uv=r270,r270,r90,r270,r180,r0
+stripped_mangrove_wood[axis=y] full stripped_mangrove_log
+stripped_mangrove_wood[axis=z] full stripped_mangrove_log uv=r0,r180,r180,r0,r270,r90
+basalt[axis=x] full basalt_side basalt_side basalt_side basalt_side basalt_top basalt_top uv=r270,r270,r90,r270,r180,r0
+basalt[axis=y] full basalt_top basalt_top basalt_side basalt_side basalt_side basalt_side
+basalt[axis=z] full basalt_side basalt_side basalt_top basalt_top basalt_side basalt_side uv=r0,r180,r180,r0,r270,r90
+polished_basalt[axis=x] full polished_basalt_side polished_basalt_side polished_basalt_side polished_basalt_side polished_basalt_top polished_basalt_top uv=r270,r270,r90,r270,r180,r0
+polished_basalt[axis=y] full polished_basalt_top polished_basalt_top polished_basalt_side polished_basalt_side polished_basalt_side polished_basalt_side
+polished_basalt[axis=z] full polished_basalt_side polished_basalt_side polished_basalt_top polished_basalt_top polished_basalt_side polished_basalt_side uv=r0,r180,r180,r0,r270,r90
+hay_block[axis=x] full hay_block_side hay_block_side hay_block_side hay_block_side hay_block_top hay_block_top uv=r270,r270,r90,r270,r0,r0
+hay_block[axis=y] full hay_block_top hay_block_top hay_block_side hay_block_side hay_block_side hay_block_side
+hay_block[axis=z] full hay_block_side hay_block_side hay_block_top hay_block_top hay_block_side hay_block_side uv=r0,r180,r0,r0,r270,r90
+bone_block[axis=x] full bone_block_side bone_block_side bone_block_side bone_block_side bone_block_top bone_block_top uv=r270,r270,r90,r270,r180,r0
+bone_block[axis=y] full bone_block_top bone_block_top bone_block_side bone_block_side bone_block_side bone_block_side
+bone_block[axis=z] full bone_block_side bone_block_side bone_block_top bone_block_top bone_block_side bone_block_side uv=r0,r180,r180,r0,r270,r90
+warped_stem[axis=x] full warped_stem warped_stem warped_stem warped_stem warped_stem_top warped_stem_top uv=r270,r270,r90,r270,r180,r0
+warped_stem[axis=y] full warped_stem_top warped_stem_top warped_stem warped_stem warped_stem warped_stem
+warped_stem[axis=z] full warped_stem warped_stem warped_stem_top warped_stem_top warped_stem warped_stem uv=r0,r180,r180,r0,r270,r90
+stripped_warped_stem[axis=x] full stripped_warped_stem stripped_warped_stem stripped_warped_stem stripped_warped_stem stripped_warped_stem_top stripped_warped_stem_top uv=r270,r270,r90,r270,r180,r0
+stripped_warped_stem[axis=y] full stripped_warped_stem_top stripped_warped_stem_top stripped_warped_stem stripped_warped_stem stripped_warped_stem stripped_warped_stem
+stripped_warped_stem[axis=z] full stripped_warped_stem stripped_warped_stem stripped_warped_stem_top stripped_warped_stem_top stripped_warped_stem stripped_warped_stem uv=r0,r180,r180,r0,r270,r90
+warped_hyphae[axis=x] full warped_stem uv=r270,r270,r90,r270,r180,r0
+warped_hyphae[axis=y] full warped_stem
+warped_hyphae[axis=z] full warped_stem uv=r0,r180,r180,r0,r270,r90
+stripped_warped_hyphae[axis=x] full stripped_warped_stem uv=r270,r270,r90,r270,r180,r0
+stripped_warped_hyphae[axis=y] full stripped_warped_stem
+stripped_warped_hyphae[axis=z] full stripped_warped_stem uv=r0,r180,r180,r0,r270,r90
+crimson_stem[axis=x] full crimson_stem crimson_stem crimson_stem crimson_stem crimson_stem_top crimson_stem_top uv=r270,r270,r90,r270,r180,r0
+crimson_stem[axis=y] full crimson_stem_top crimson_stem_top crimson_stem crimson_stem crimson_stem crimson_stem
+crimson_stem[axis=z] full crimson_stem crimson_stem crimson_stem_top crimson_stem_top crimson_stem crimson_stem uv=r0,r180,r180,r0,r270,r90
+stripped_crimson_stem[axis=x] full stripped_crimson_stem stripped_crimson_stem stripped_crimson_stem stripped_crimson_stem stripped_crimson_stem_top stripped_crimson_stem_top uv=r270,r270,r90,r270,r180,r0
+stripped_crimson_stem[axis=y] full stripped_crimson_stem_top stripped_crimson_stem_top stripped_crimson_stem stripped_crimson_stem stripped_crimson_stem stripped_crimson_stem
+stripped_crimson_stem[axis=z] full stripped_crimson_stem stripped_crimson_stem stripped_crimson_stem_top stripped_crimson_stem_top stripped_crimson_stem stripped_crimson_stem uv=r0,r180,r180,r0,r270,r90
+crimson_hyphae[axis=x] full crimson_stem uv=r270,r270,r90,r270,r180,r0
+crimson_hyphae[axis=y] full crimson_stem
+crimson_hyphae[axis=z] full crimson_stem uv=r0,r180,r180,r0,r270,r90
+stripped_crimson_hyphae[axis=x] full stripped_crimson_stem uv=r270,r270,r90,r270,r180,r0
+stripped_crimson_hyphae[axis=y] full stripped_crimson_stem
+stripped_crimson_hyphae[axis=z] full stripped_crimson_stem uv=r0,r180,r180,r0,r270,r90
+deepslate[axis=x] full deepslate deepslate deepslate deepslate deepslate_top deepslate_top uv=r270,r270,r90,r270,r180,r0/mr90,mr90,mr270,mr90,mr180,mr0
+deepslate[axis=y] full deepslate_top deepslate_top deepslate deepslate deepslate deepslate rotate=mirror
+deepslate[axis=z] full deepslate deepslate deepslate_top deepslate_top deepslate deepslate uv=r0,r180,r180,r0,r270,r90/mr0,mr180,mr180,mr0,mr90,mr270/r180,r0,r0,r180,r90,r270/mr180,mr0,mr0,mr180,mr270,mr90
+infested_deepslate[axis=x] full deepslate deepslate deepslate deepslate deepslate_top deepslate_top uv=r270,r270,r90,r270,r180,r0/mr90,mr90,mr270,mr90,mr180,mr0
+infested_deepslate[axis=y] full deepslate_top deepslate_top deepslate deepslate deepslate deepslate rotate=mirror
+infested_deepslate[axis=z] full deepslate deepslate deepslate_top deepslate_top deepslate deepslate uv=r0,r180,r180,r0,r270,r90/mr0,mr180,mr180,mr0,mr90,mr270/r180,r0,r0,r180,r90,r270/mr180,mr0,mr0,mr180,mr270,mr90
+ochre_froglight[axis=x] full ochre_froglight_side ochre_froglight_side ochre_froglight_side ochre_froglight_side ochre_froglight_top ochre_froglight_top uv=r270,r270,r90,r270,r0,r0
+ochre_froglight[axis=y] full ochre_froglight_top ochre_froglight_top ochre_froglight_side ochre_froglight_side ochre_froglight_side ochre_froglight_side
+ochre_froglight[axis=z] full ochre_froglight_side ochre_froglight_side ochre_froglight_top ochre_froglight_top ochre_froglight_side ochre_froglight_side uv=r0,r180,r0,r0,r270,r90
+verdant_froglight[axis=x] full verdant_froglight_side verdant_froglight_side verdant_froglight_side verdant_froglight_side verdant_froglight_top verdant_froglight_top uv=r270,r270,r90,r270,r0,r0
+verdant_froglight[axis=y] full verdant_froglight_top verdant_froglight_top verdant_froglight_side verdant_froglight_side verdant_froglight_side verdant_froglight_side
+verdant_froglight[axis=z] full verdant_froglight_side verdant_froglight_side verdant_froglight_top verdant_froglight_top verdant_froglight_side verdant_froglight_side uv=r0,r180,r0,r0,r270,r90
+pearlescent_froglight[axis=x] full pearlescent_froglight_side pearlescent_froglight_side pearlescent_froglight_side pearlescent_froglight_side pearlescent_froglight_top pearlescent_froglight_top uv=r270,r270,r90,r270,r0,r0
+pearlescent_froglight[axis=y] full pearlescent_froglight_top pearlescent_froglight_top pearlescent_froglight_side pearlescent_froglight_side pearlescent_froglight_side pearlescent_froglight_side
+pearlescent_froglight[axis=z] full pearlescent_froglight_side pearlescent_froglight_side pearlescent_froglight_top pearlescent_froglight_top pearlescent_froglight_side pearlescent_froglight_side uv=r0,r180,r0,r0,r270,r90
+creaking_heart[axis=x,creaking_heart_state=awake] full creaking_heart_awake creaking_heart_awake creaking_heart_awake creaking_heart_awake creaking_heart_top_awake creaking_heart_top_awake uv=r270,r270,r90,r270,r0,r0
+creaking_heart[axis=x,creaking_heart_state=dormant] full creaking_heart_dormant creaking_heart_dormant creaking_heart_dormant creaking_heart_dormant creaking_heart_top_dormant creaking_heart_top_dormant uv=r270,r270,r90,r270,r0,r0
+creaking_heart[axis=x,creaking_heart_state=uprooted] full creaking_heart creaking_heart creaking_heart creaking_heart creaking_heart_top creaking_heart_top uv=r270,r270,r90,r270,r0,r0
+creaking_heart[axis=y,creaking_heart_state=awake] full creaking_heart_top_awake creaking_heart_top_awake creaking_heart_awake creaking_heart_awake creaking_heart_awake creaking_heart_awake
+creaking_heart[axis=y,creaking_heart_state=dormant] full creaking_heart_top_dormant creaking_heart_top_dormant creaking_heart_dormant creaking_heart_dormant creaking_heart_dormant creaking_heart_dormant
+creaking_heart[axis=y,creaking_heart_state=uprooted] full creaking_heart_top creaking_heart_top creaking_heart creaking_heart creaking_heart creaking_heart
+creaking_heart[axis=z,creaking_heart_state=awake] full creaking_heart_awake creaking_heart_awake creaking_heart_top_awake creaking_heart_top_awake creaking_heart_awake creaking_heart_awake uv=r0,r180,r0,r0,r270,r90
+creaking_heart[axis=z,creaking_heart_state=dormant] full creaking_heart_dormant creaking_heart_dormant creaking_heart_top_dormant creaking_heart_top_dormant creaking_heart_dormant creaking_heart_dormant uv=r0,r180,r0,r0,r270,r90
+creaking_heart[axis=z,creaking_heart_state=uprooted] full creaking_heart creaking_heart creaking_heart_top creaking_heart_top creaking_heart creaking_heart uv=r0,r180,r0,r0,r270,r90
+poplar_log[axis=x] full poplar_log poplar_log poplar_log poplar_log poplar_log_top poplar_log_top uv=r270,r270,r90,r270,r0,r0
+poplar_log[axis=y] full poplar_log_top poplar_log_top poplar_log poplar_log poplar_log poplar_log
+poplar_log[axis=z] full poplar_log poplar_log poplar_log_top poplar_log_top poplar_log poplar_log uv=r0,r180,r0,r0,r270,r90
+stripped_poplar_log[axis=x] full stripped_poplar_log stripped_poplar_log stripped_poplar_log stripped_poplar_log stripped_poplar_log_top stripped_poplar_log_top uv=r270,r270,r90,r270,r0,r0
+stripped_poplar_log[axis=y] full stripped_poplar_log_top stripped_poplar_log_top stripped_poplar_log stripped_poplar_log stripped_poplar_log stripped_poplar_log
+stripped_poplar_log[axis=z] full stripped_poplar_log stripped_poplar_log stripped_poplar_log_top stripped_poplar_log_top stripped_poplar_log stripped_poplar_log uv=r0,r180,r0,r0,r270,r90
+poplar_wood[axis=x] full poplar_log uv=r270,r270,r90,r270,r180,r0
+poplar_wood[axis=y] full poplar_log
+poplar_wood[axis=z] full poplar_log uv=r0,r180,r180,r0,r270,r90
+stripped_poplar_wood[axis=x] full stripped_poplar_log uv=r270,r270,r90,r270,r180,r0
+stripped_poplar_wood[axis=y] full stripped_poplar_log
+stripped_poplar_wood[axis=z] full stripped_poplar_log uv=r0,r180,r180,r0,r270,r90

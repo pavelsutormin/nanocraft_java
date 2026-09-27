@@ -1,11 +1,11 @@
 package org.sutormin.nanocraft.networking.packets.play.world.block;
 
 import io.netty.buffer.ByteBuf;
-import org.sutormin.nanocraft.NanoCraft;
 import org.sutormin.nanocraft.networking.coders.VarCoder;
 import org.sutormin.nanocraft.networking.packets.types.S2CPacket;
 import org.sutormin.nanocraft.world.BlockStateMapper;
-import org.sutormin.nanocraft.world.ChunkLoader;
+import org.sutormin.nanocraft.world.Dimension;
+import org.sutormin.nanocraft.world.chunk.ChunkLoader;
 
 public class S2CBlockUpdate implements S2CPacket {
 
@@ -20,7 +20,7 @@ public class S2CBlockUpdate implements S2CPacket {
     int blockStateId = VarCoder.readVarInt(buf);
     char type = BlockStateMapper.map(blockStateId);
 
-    // Vanilla y is -64..319; array y is world y + 64 (see ChunkLoader docs).
-    ChunkLoader.submitBlockChange(x, y + 64, z, type);
+    // chunk arrays start at the dimension's lowest y (see ChunkLoader docs)
+    ChunkLoader.submitBlockChange(x, Dimension.toRow(y), z, type);
   }
 }

@@ -1,0 +1,25 @@
+// blocks whose texture has a different name (waxed, infested, torches)
+// <name> <shape> <textures...>  full-block face order: up down north south east west
+// name[prop=a|b] matches every state with those property values; the most specific match wins
+infested_stone full stone rotate=mirror
+infested_cobblestone full cobblestone
+infested_stone_bricks full stone_bricks
+infested_mossy_stone_bricks full mossy_stone_bricks
+infested_cracked_stone_bricks full cracked_stone_bricks
+infested_chiseled_stone_bricks full chiseled_stone_bricks
+waxed_oxidized_chiseled_copper full oxidized_chiseled_copper
+waxed_weathered_chiseled_copper full weathered_chiseled_copper
+waxed_exposed_chiseled_copper full exposed_chiseled_copper
+waxed_chiseled_copper full chiseled_copper
+waxed_copper_block full copper_block
+waxed_weathered_copper full weathered_copper
+waxed_exposed_copper full exposed_copper
+waxed_oxidized_copper full oxidized_copper
+waxed_oxidized_cut_copper full oxidized_cut_copper
+waxed_weathered_cut_copper full weathered_cut_copper
+waxed_exposed_cut_copper full exposed_cut_copper
+waxed_cut_copper full cut_copper
+waxed_copper_grate full copper_grate
+waxed_exposed_copper_grate full exposed_copper_grate
+waxed_weathered_copper_grate full weathered_copper_grate
+waxed_oxidized_copper_grate full oxidized_copper_grate

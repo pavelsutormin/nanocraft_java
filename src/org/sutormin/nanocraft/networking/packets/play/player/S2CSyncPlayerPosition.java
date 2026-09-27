@@ -1,5 +1,6 @@
 package org.sutormin.nanocraft.networking.packets.play.player;
 
+import org.sutormin.nanocraft.world.Dimension;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.joml.Vector3f;
@@ -93,7 +94,7 @@ public class S2CSyncPlayerPosition implements S2CPacket {
     }
 
     if ((flags & RELATIVE_Y) != 0) {
-      y += camera.getY()-64;
+      y += camera.getY() + Dimension.minY();
     }
 
     if ((flags & RELATIVE_Z) != 0) {
@@ -173,7 +174,7 @@ public class S2CSyncPlayerPosition implements S2CPacket {
     /*
      * Apply everything to the actual game state.
      */
-    camera.setPosition(x, y+64, z);
+    camera.setPosition(x, y - Dimension.minY(), z); // camera y is render y (see Dimension)
 
     camera.setRotation(
         90+yaw,
@@ -189,12 +190,17 @@ public class S2CSyncPlayerPosition implements S2CPacket {
     /*
      * The client must acknowledge the teleport.
      */
-    sendConfirmTeleportation(teleportId);
+    // pitch was negated when read; never send non-finite values (the server disconnects for those)
+    boolean finite = Double.isFinite(x) && Double.isFinite(y) && Double.isFinite(z) && Float.isFinite(yaw) && Float.isFinite(pitch);
+    if (!finite) System.err.println("[Client] Teleport resolved to invalid values; confirming the camera's position instead");
+    sendConfirmTeleportation(teleportId,
+        finite ? x : camera.getX(), finite ? y : camera.getY() + Dimension.minY(), finite ? z : camera.getZ(),
+        finite ? yaw : 0f, finite ? -pitch : 0f);
   }
 
-  private void sendConfirmTeleportation(int teleportId) {
+  private void sendConfirmTeleportation(int teleportId, double x, double y, double z, float yaw, float pitch) {
     ByteBuf buf = channel.alloc().buffer();
-    C2SConfirmTeleport.make(buf,teleportId);
+    C2SConfirmTeleport.make(buf, teleportId, x, y, z, yaw, pitch);
     channel.writeAndFlush(buf);
   }
 

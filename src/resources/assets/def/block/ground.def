@@ -1,0 +1,17 @@
+// grass, soil, snow and liquids
+// <name> <shape> <textures...>  full-block face order: up down north south east west
+// name[prop=a|b] matches every state with those property values; the most specific match wins
+// grass blocks: the top and the side overlay take the biome's grass color; snowy grass, podzol and
+// mycelium all use vanilla's grass_block_snow model (untinted top, snowy side)
+grass_block[snowy=false] full_overlay grass_block_top dirt grass_block_side grass_block_side grass_block_side grass_block_side grass_block_side_overlay grass_block_side_overlay grass_block_side_overlay grass_block_side_overlay rotate=random tint=0,6,7,8,9
+grass_block[snowy=true] full grass_block_top dirt grass_block_snow grass_block_snow grass_block_snow grass_block_snow
+podzol[snowy=false] full podzol_top dirt podzol_side podzol_side podzol_side podzol_side rotate=random
+podzol[snowy=true] full grass_block_top dirt grass_block_snow grass_block_snow grass_block_snow grass_block_snow
+mycelium[snowy=false] full mycelium_top dirt mycelium_side mycelium_side mycelium_side mycelium_side rotate=random
+mycelium[snowy=true] full grass_block_top dirt grass_block_snow grass_block_snow grass_block_snow grass_block_snow
+crimson_nylium full crimson_nylium netherrack crimson_nylium_side crimson_nylium_side crimson_nylium_side crimson_nylium_side
+warped_nylium full warped_nylium netherrack warped_nylium_side warped_nylium_side warped_nylium_side warped_nylium_side
+snow_block full snow
+magma_block full magma
+water liquid water_still
+lava liquid lava_still

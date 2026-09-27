@@ -53,17 +53,25 @@ public class Networking {
             if (future.isSuccess()) {
                 channel = ((io.netty.channel.ChannelFuture) future).channel();
 
-                System.out.println("Connected!");
+                System.out.println("Connected to "+Options.SERVER_IP+", port "+Options.PORT);
             } else {
-                System.err.println("Connection failed");
+                System.err.println("Connection failed to "+Options.SERVER_IP+", port "+Options.PORT);
                 future.cause().printStackTrace();
             }
         });
     }
 
+    private static boolean warnedNotConnected = false;
+
+    /** Sends a packet; while not connected it's dropped (logged once) instead of crashing the game loop. */
     public static void sendPacket(ByteBuf buf) {
         if (channel == null || !channel.isActive()) {
-            throw new IllegalStateException("Not connected");
+            buf.release();
+            if (!warnedNotConnected) {
+                warnedNotConnected = true;
+                System.err.println("[Client] Not connected to a server; packets are dropped");
+            }
+            return;
         }
 
         channel.writeAndFlush(buf);

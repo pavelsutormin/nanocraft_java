@@ -1,0 +1,28 @@
+// blocks whose only special def is a random texture rotation, like vanilla's randomly rotated models
+// rotate=random turns the top and bottom texture by 0/90/180/270 degrees, rotate=random_all every face,
+// rotate=mirror (vanilla stone) randomly mirrors every face and turns top/bottom 0 or 180 degrees;
+// the turn comes from a hash of the block's position within its chunk
+stone full stone rotate=mirror
+dirt full dirt rotate=random
+sand full sand rotate=random
+red_sand full red_sand rotate=random
+bedrock full bedrock rotate=mirror
+sculk full sculk rotate=mirror
+rooted_dirt full rooted_dirt rotate=random
+white_concrete_powder full white_concrete_powder rotate=random
+orange_concrete_powder full orange_concrete_powder rotate=random
+magenta_concrete_powder full magenta_concrete_powder rotate=random
+light_gray_concrete_powder full light_gray_concrete_powder rotate=random
+gray_concrete_powder full gray_concrete_powder rotate=random
+black_concrete_powder full black_concrete_powder rotate=random
+brown_concrete_powder full brown_concrete_powder rotate=random
+red_concrete_powder full red_concrete_powder rotate=random
+yellow_concrete_powder full yellow_concrete_powder rotate=random
+lime_concrete_powder full lime_concrete_powder rotate=random
+green_concrete_powder full green_concrete_powder rotate=random
+cyan_concrete_powder full cyan_concrete_powder rotate=random
+light_blue_concrete_powder full light_blue_concrete_powder rotate=random
+blue_concrete_powder full blue_concrete_powder rotate=random
+purple_concrete_powder full purple_concrete_powder rotate=random
+pink_concrete_powder full pink_concrete_powder rotate=random
+netherrack full netherrack rotate=random_all

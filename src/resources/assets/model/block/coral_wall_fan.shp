@@ -1,0 +1,5 @@
+// Nanocraft block shapes - family "coral_wall_fan";
+coral_wall_fan[facing=north]|0,0.25,1 1,0.25,1 1,0.6875,0.25 0,0.6875,0.25|up,false,0,0,1,1,1,1,2,1,0,3,0,0 down,false,3,0,0,2,1,0,1,1,1,0,0,1;
+coral_wall_fan[facing=south]|1,0.25,0 0,0.25,0 0,0.6875,0.75 1,0.6875,0.75|up,false,0,0,1,1,1,1,2,1,0,3,0,0 down,false,3,0,0,2,1,0,1,1,1,0,0,1;
+coral_wall_fan[facing=west]|1,0.25,1 1,0.25,0 0.25,0.6875,0 0.25,0.6875,1|up,false,0,0,1,1,1,1,2,1,0,3,0,0 down,false,3,0,0,2,1,0,1,1,1,0,0,1;
+coral_wall_fan[facing=east]|0,0.25,0 0,0.25,1 0.75,0.6875,1 0.75,0.6875,0|up,false,0,0,1,1,1,1,2,1,0,3,0,0 down,false,3,0,0,2,1,0,1,1,1,0,0,1;

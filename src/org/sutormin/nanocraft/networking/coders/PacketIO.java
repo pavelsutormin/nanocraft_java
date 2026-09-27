@@ -3,6 +3,7 @@ package org.sutormin.nanocraft.networking.coders;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import org.sutormin.nanocraft.Options;
 import org.sutormin.nanocraft.networking.Networking;
 import org.sutormin.nanocraft.networking.packets.PacketList;
 import org.sutormin.nanocraft.networking.packets.types.S2CPacket;
@@ -20,8 +21,10 @@ public class PacketIO {
     }
     
     public static void write(ByteBuf out, int packetId, ByteBuf data){
-        //System.out.println("SENDING ID: "+packetId);
-        //System.out.println(data.readableBytes());
+        if (Options.DEBUG_LOG_C2S_PACKETS) {
+            System.out.printf("[C2S] %s 0x%02X %s (%d bytes)%n", Networking.networkPhase, packetId, callerName(),
+                    data.readableBytes());
+        }
         if (Networking.compressionThreshold >= 0) {
             writeCompressedPacket(
                 out,
@@ -30,10 +33,36 @@ public class PacketIO {
                 Networking.compressionThreshold
             );
         } else {
-            //System.out.println("a");
             writePacket(out, packetId, data);
         }
     }
+    /** The packet class that called {@link #write}: each C2S packet writes itself from its make(). */
+    private static String callerName() {
+        return StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
+                .walk(frames -> frames.map(StackWalker.StackFrame::getDeclaringClass)
+                        .filter(c -> c != PacketIO.class)
+                        .findFirst()
+                        .map(Class::getSimpleName)
+                        .orElse("?"));
+    }
+
+    /** Hands a server packet's data (after its id) to the packet class for its id, if there is one. */
+    private static void dispatch(int packetId, ByteBuf data, Channel channel) {
+        S2CPacket packet = PacketList.getS2CPacket(packetId, Networking.networkPhase, channel);
+        if (packet == null) {
+            if (Options.DEBUG_LOG_UNKNOWN_S2C_PACKETS) {
+                System.out.printf("[S2C] %s 0x%02X unknown, skipped (%d bytes)%n", Networking.networkPhase, packetId,
+                        data.readableBytes());
+            }
+            return;
+        }
+        if (Options.DEBUG_LOG_KNOWN_S2C_PACKETS) {
+            System.out.printf("[S2C] %s 0x%02X %s (%d bytes)%n", Networking.networkPhase, packetId,
+                    packet.getClass().getSimpleName(), data.readableBytes());
+        }
+        packet.read(data);
+    }
+
     private static void writePacket(ByteBuf buf, int id, ByteBuf data) {
         VarCoder.writeVarInt(
             buf,
@@ -47,30 +76,7 @@ public class PacketIO {
     private static void readPacket(ByteBuf buf, Channel channel) {
         int length = VarCoder.readVarInt(buf);
         int packetId = VarCoder.readVarInt(buf);
-
-        /*System.out.printf(
-            "Packet Received -> Length: %d, ID: 0x%02X%n",
-            length,
-            packetId
-        );
-
-        System.out.printf(
-            "S2C: phase=%s id=0x%02X length=%d%n",
-            Networking.networkPhase,
-            packetId,
-            length
-        );*/
-
-        S2CPacket packet = PacketList.getS2CPacket(
-            packetId,
-            Networking.networkPhase,
-            channel
-        );
-        if (packet == null) {
-            //System.out.printf("UNKNOWN S2C: phase=%s id=0x%02X length=%d%n", Networking.networkPhase, packetId,length);
-            return;
-        }
-        packet.read(buf);
+        dispatch(packetId, buf.readSlice(length - VarCoder.lenVarInt(packetId)), channel);
     }
 
     private static void writeCompressedPacket(
@@ -217,32 +223,7 @@ public class PacketIO {
 
         try {
             int packetId = VarCoder.readVarInt(packetData);
-
-      /*System.out.printf(
-          "Compressed Packet Received -> Length: %d, " +
-              "Uncompressed Length: %d, ID: 0x%02X%n",
-          packetLength,
-          dataLength,
-          packetId
-      );
-
-      System.out.printf(
-          "S2C: phase=%s id=0x%02X%n",
-          Networking.networkPhase,
-          packetId
-      );*/
-
-            S2CPacket packet = PacketList.getS2CPacket(
-                packetId,
-                Networking.networkPhase,
-                channel
-            );
-            if (packet == null) {
-                //System.out.printf("UNKNOWN S2C: phase=%s id=0x%02X length=%d%n", Networking.networkPhase, packetId,dataLength);
-                return;
-            }
-
-            packet.read(packetData);
+            dispatch(packetId, packetData, channel);
 
         } finally {
             // Only release wrapped decompressed buffers.

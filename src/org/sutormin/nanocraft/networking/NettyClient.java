@@ -46,6 +46,11 @@ public class NettyClient extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        System.err.println("[Client] Connection to the server closed");
+    }
+
+    @Override
     public void exceptionCaught(
             ChannelHandlerContext ctx,
             Throwable cause

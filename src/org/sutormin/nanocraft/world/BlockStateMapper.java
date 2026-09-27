@@ -1,21 +1,20 @@
 package org.sutormin.nanocraft.world;
 
-import org.sutormin.nanocraft.block.BlockRegistry;
-import org.sutormin.nanocraft.block.BlockType;
-import org.sutormin.nanocraft.block.BlockTypes;
+import org.sutormin.nanocraft.Main;
+import org.sutormin.nanocraft.data.Registries;
+import org.sutormin.nanocraft.data.quickaccess.QuickAccessBlocks;
+import org.sutormin.nanocraft.data.types.Block;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Translates vanilla block state ids into NanoCraft block types.
  *
- * Vanilla ships one id per block state, so 26.2 has more than 65536 of them.
+ * Vanilla ships one id per block state: 35,723 of them in 26.3.
  * The mapping is version specific and cannot be hardcoded; it is loaded from a
  * generated table of state names, one line per state id in ascending order:
  *
@@ -36,9 +35,21 @@ import java.util.List;
  */
 public final class BlockStateMapper {
 
-    private static char[] table;
+    // volatile: load() typically runs on a startup/config thread, map() gets
+    // called from packet-handling threads. Without this there's no guarantee
+    // another thread ever observes the fully published array.
+    private static volatile char[] table;
 
     private BlockStateMapper() {
+    }
+
+    public static void load() {
+        try (InputStream in = Main.class.getResourceAsStream("/data/block/blockstates.txt")) {
+            load(in);
+        } catch (IOException e) {
+            System.err.println("ERROR LOADING BLOCKSTATES: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -46,7 +57,9 @@ public final class BlockStateMapper {
      *           getResourceAsStream("/blockstates.txt")
      */
     public static void load(InputStream in) throws IOException {
-        List<Character> types = new ArrayList<>();
+        // StringBuilder is backed by a plain char[] internally, so this avoids
+        // boxing every entry into a Character the way List<Character> would.
+        StringBuilder buffer = new StringBuilder(70_000);
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(in, StandardCharsets.UTF_8)
@@ -57,17 +70,13 @@ public final class BlockStateMapper {
                 line = line.trim();
 
                 if (!line.isEmpty()) {
-                    types.add(fromName(line));
+                    buffer.append(fromName(line));
                 }
             }
         }
 
-        char[] loaded = new char[types.size()];
-
-        for (int i = 0; i < loaded.length; i++) {
-            loaded[i] = types.get(i);
-        }
-
+        char[] loaded = new char[buffer.length()];
+        buffer.getChars(0, buffer.length(), loaded, 0);
         table = loaded;
 
         System.out.printf("Loaded %d block states%n", table.length);
@@ -78,16 +87,17 @@ public final class BlockStateMapper {
     }
 
     public static char map(int stateId) {
-        if (table == null) {
+        char[] t = table; // single volatile read, avoids re-reading the field twice below
+
+        if (t == null) {
             // No table yet: show terrain as solid stone, keep air as air.
-            return stateId == 0 ? BlockTypes.AIR : BlockTypes.STONE;
+            return stateId == 0 ? QuickAccessBlocks.AIR : QuickAccessBlocks.STONE;
         }
 
-        if (stateId < 0 || stateId >= table.length) {
-            return BlockTypes.STONE;
+        if (stateId < 0 || stateId >= t.length) {
+            return QuickAccessBlocks.NOT_FOUND;
         }
-
-        return table[stateId];
+        return t[stateId];
     }
 
     /**
@@ -95,39 +105,17 @@ public final class BlockStateMapper {
      * block it does have. Extend as BlockTypes grows.
      */
     private static char fromName(String name) {
-      BlockType block = BlockRegistry.getBlockByName(name);
+        int colon = name.indexOf(':');
+        if (colon != -1) {
+            name = name.substring(colon + 1);
+        }
 
-      if (block == null) {
-        //System.err.println("Unknown block: " + name);
-        return BlockTypes.NULL;
-      }
+        Block block = Registries.BLOCK.get(name);
 
-      return block.getId();
-    }
+        if (block == null) {
+            return (char) Registries.BLOCK.get("not_found").getId();
+        }
 
-    /**
-     * Crude filter so plants, torches and similar do not become stone cubes.
-     * A real implementation would read the collision shapes from the reports.
-     */
-    private static boolean isNonSolid(String name) {
-        return name.endsWith("_sapling")
-                || name.endsWith("_flower")
-                || name.endsWith("_fern")
-                || name.endsWith("_grass")
-                || name.endsWith("_bush")
-                || name.endsWith("_torch")
-                || name.endsWith("_sign")
-                || name.endsWith("_banner")
-                || name.endsWith("_carpet")
-                || name.endsWith("_pressure_plate")
-                || name.endsWith("_button")
-                || name.contains("lava")
-                || name.contains("fire")
-                || name.contains("rail")
-                || name.contains("vine")
-                || name.contains("mushroom")
-                || name.contains("coral_fan")
-                || name.contains("seagrass")
-                || name.contains("kelp");
+        return (char) block.getId();
     }
 }

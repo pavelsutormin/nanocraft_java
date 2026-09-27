@@ -1,4 +1,16 @@
 NanoCraft
-A Open Source Minecraft Clone
+An Open Source Minecraft Clone
+
+Setup, running the game and a local server, and generating textures: see docs/GETTING_STARTED.md
 
 NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT
+
+About Minecraft's code and assets
+- NanoCraft contains no Mojang code, textures, sounds or other assets.
+- To talk to vanilla servers, the network protocol, block state ids and a few game formulas (biome lookup,
+  grass colors) were worked out from the vanilla game for compatibility and reimplemented from scratch.
+- Some data files are generated from vanilla's data for compatibility: block state names
+  (data/block/blockstates.txt), block shapes and texture names (model/block/vanilla.shp,
+  def/block/vanilla.def) and biome grass colors (data/biome/grass_colors.txt).
+- Textures are never included: the Gradle tasks download the official client jar from Mojang and
+  generate everything locally, on your own machine (./gradlew downloadClient copyBlockTextures generateTextures).

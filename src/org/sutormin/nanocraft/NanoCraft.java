@@ -6,14 +6,25 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
-import org.sutormin.nanocraft.block.BlockTypes;
+import org.sutormin.nanocraft.data.Registries;
+import org.sutormin.nanocraft.data.definitions.BlockShapeDefinitions;
+import org.sutormin.nanocraft.data.quickaccess.QuickAccessBlocks;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import org.sutormin.nanocraft.networking.NetworkPhase;
 import org.sutormin.nanocraft.networking.Networking;
+import org.sutormin.nanocraft.networking.packets.play.player.C2SClientTickEnd;
 import org.sutormin.nanocraft.render.Shader;
-import org.sutormin.nanocraft.render.shaders.Frag;
-import org.sutormin.nanocraft.render.shaders.Vert;
-import org.sutormin.nanocraft.resources.Textures;
-import org.sutormin.nanocraft.world.ChunkPos;
+import org.sutormin.nanocraft.world.Dimension;
+import org.sutormin.nanocraft.resources.block.BlockDefinitionParser;
+import org.sutormin.nanocraft.resources.block.BlockShapeParser;
+import org.sutormin.nanocraft.resources.texture.Texture;
+import org.sutormin.nanocraft.resources.texture.Textures;
+import org.sutormin.nanocraft.world.BlockStateMapper;
+import org.sutormin.nanocraft.world.chunk.ChunkPos;
 import org.sutormin.nanocraft.world.World;
+import org.sutormin.nanocraft.world.biome.BiomeTint;
+import org.sutormin.nanocraft.world.render.WorldShaders;
 
 import java.nio.IntBuffer;
 import java.util.List;
@@ -36,8 +47,6 @@ public class NanoCraft {
     private double lastMouseX = width / 2.0;
     private double lastMouseY = height / 2.0;
     private boolean firstMouse = true;
-
-    //private ChunkPos lastCameraChunkPos = null;
 
     public void run() {
         init();
@@ -93,6 +102,7 @@ public class NanoCraft {
 
         GL.createCapabilities();
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL); // overlay faces (grass sides) lie exactly on the face below them
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glClearColor(0.623f, 0.734f, 0.785f, 1.0f);
@@ -109,15 +119,32 @@ public class NanoCraft {
             GL11.glViewport(0, 0, pWidth.get(0), pHeight.get(0));
         }
 
-        BlockTypes.define();
 
+
+
+        System.out.println("Loading block definitions!");
+        BlockDefinitionParser.loadFromIndex();
+        System.out.println("Loading block shapes!");
+        BlockShapeParser.loadFromIndex();
+
+        System.out.println("Loading registries!");
+        Registries.defineAll();
+        QuickAccessBlocks.loadFromRegistry();
+
+        System.out.println("Loading biome colors!");
+        BiomeTint.load();
+
+        System.out.println("Loading blockstate map!");
+        BlockStateMapper.load();
+
+        System.out.println("Loading textures!");
         Textures.loadTextures();
 
-
-        SHADER = new Shader(Vert.VERTEX_SHADER, Frag.FRAGMENT_SHADER);
+        SHADER = new Shader(WorldShaders.WORLD_VERTEX_SHADER, WorldShaders.WORLD_FRAGMENT_SHADER);
         SHADER.createUniform("uProjection");
         SHADER.createUniform("uView");
         SHADER.createUniform("uChunkOffset");
+        SHADER.createUniform("uAlphaCutoff");
 
         WORLD = new World();
 
@@ -130,20 +157,33 @@ public class NanoCraft {
         );
 
         long lastTime = System.nanoTime();
+        float clientTickTime = 0.0f;
+        long fpsStart = lastTime;
+        int frames = 0;
         while (!glfwWindowShouldClose(window)) {
             long now = System.nanoTime();
             float deltaTime = (now - lastTime) / 1000000000.0f;
             lastTime = now;
 
+            frames++;
+            if (now - fpsStart >= 1_000_000_000L) {
+                if (Options.DEBUG_SHOW_FPS) {
+                    glfwSetWindowTitle(window, String.format("NanoCraft | %d FPS | %d chunks | %.1f %.1f %.1f",
+                            frames, WORLD.chunkCount(), CAMERA.getX(), CAMERA.getY() + Dimension.minY(), CAMERA.getZ()));
+                }
+                frames = 0;
+                fpsStart = now;
+            }
+
+            // fixed 20 Hz client ticks for the server, like vanilla, however fast frames are drawn
+            clientTickTime += deltaTime;
+            if (clientTickTime > 0.25f) clientTickTime = CLIENT_TICK; // after a stall, don't send a burst
+            while (clientTickTime >= CLIENT_TICK) {
+                clientTick();
+                clientTickTime -= CLIENT_TICK;
+            }
+
             WORLD.tick();
-
-            //ChunkLoader.poll();
-
-            /*if (now - lastLog > 1_000_000_000L) {
-                System.out.printf("camera chunk %s | loaded %d | queued %d%n",
-                        CAMERA.getChunkPos(), WORLD.chunkCount(), ChunkLoader.pendingCount());
-                lastLog = now;
-            }*/
 
             processInput(deltaTime);
 
@@ -154,7 +194,25 @@ public class NanoCraft {
             SHADER.setUniform("uProjection", projection);
             SHADER.setUniform("uView", CAMERA.getViewMatrix());
 
+            if (Options.DEBUG_WIREFRAME) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            SHADER.setUniform("uAlphaCutoff", 0.5f);
             WORLD.renderChunks();
+
+            // Translucent pass: blended over the opaque scene, depth-tested but not written,
+            // so translucent faces don't hide each other. Pushed slightly back in depth so a solid
+            // face lying in the same plane (the side of waterlogged stairs) always wins instead of
+            // flickering against the water.
+            SHADER.setUniform("uAlphaCutoff", 0.004f);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDepthMask(false);
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(1.0f, 1.0f);
+            WORLD.renderTranslucent();
+            glDisable(GL_POLYGON_OFFSET_FILL);
+            glDepthMask(true);
+            glDisable(GL_BLEND);
+            if (Options.DEBUG_WIREFRAME) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             Textures.BLOCK.unbind();
             SHADER.unbind();
@@ -162,6 +220,20 @@ public class NanoCraft {
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+    }
+
+    private static final float CLIENT_TICK = 1.0f / 20.0f;
+
+    /**
+     * One client tick: at most one position update, then "tick end". Since 26.3 the server disconnects
+     * clients that send more than one position between two tick ends.
+     */
+    private void clientTick() {
+        if (Networking.networkPhase != NetworkPhase.PLAY) return;
+        CAMERA.sendPositionIfMoved();
+        ByteBuf buf = Unpooled.buffer();
+        C2SClientTickEnd.make(buf);
+        Networking.sendPacket(buf);
     }
 
     private void processInput(float dt) {

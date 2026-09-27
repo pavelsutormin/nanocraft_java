@@ -1,0 +1,3 @@
+// doors (upper/lower half textures)
+// <name> <shape> <textures...>  full-block face order: up down north south east west
+// name[prop=a|b] matches every state with those property values; the most specific match wins
